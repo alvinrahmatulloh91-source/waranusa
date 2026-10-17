@@ -1,0 +1,14 @@
+node_modules/
+.next/
+out/
+dist/
+coverage/
+.vercel/
+*.tsbuildinfo
+.env*
+!.env.example
+*.db
+*.sqlite
+*.sqlite3
+upload/
+.DS_Store

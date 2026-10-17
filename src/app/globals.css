@@ -1,0 +1,206 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-jakarta);
+  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-fraunces);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  /* Warna identitas WaraNusa */
+  --color-brand-teal: var(--brand-teal);
+  --color-brand-ocean: var(--brand-ocean);
+  --color-brand-green: var(--brand-green);
+  --color-brand-gold: var(--brand-gold);
+  --color-brand-orange: var(--brand-orange);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.75rem;
+  /* Palet brand WaraNusa */
+  --brand-teal: #159d9a;
+  --brand-ocean: #1261a0;
+  --brand-green: #48a66a;
+  --brand-gold: #f2b544;
+  --brand-orange: #f28c38;
+
+  --background: #fffefa; /* putih gading */
+  --foreground: #172b3a; /* tinta utama */
+  --card: #ffffff;
+  --card-foreground: #172b3a;
+  --popover: #ffffff;
+  --popover-foreground: #172b3a;
+  --primary: #159d9a; /* teal utama */
+  --primary-foreground: #ffffff;
+  --secondary: #eaf4f2;
+  --secondary-foreground: #0f5f5d;
+  --muted: #f3f8f7; /* latar sekunder */
+  --muted-foreground: #64748b; /* teks sekunder */
+  --accent: #e6f3f1;
+  --accent-foreground: #0f5f5d;
+  --destructive: #dc2626;
+  --border: #e1ebe8;
+  --input: #d8e5e1;
+  --ring: #159d9a;
+  --chart-1: #159d9a;
+  --chart-2: #1261a0;
+  --chart-3: #48a66a;
+  --chart-4: #f2b544;
+  --chart-5: #f28c38;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #172b3a;
+  --sidebar-primary: #159d9a;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e6f3f1;
+  --sidebar-accent-foreground: #0f5f5d;
+  --sidebar-border: #e1ebe8;
+  --sidebar-ring: #159d9a;
+}
+
+.dark {
+  --brand-teal: #2ab5b1;
+  --brand-ocean: #4a90d9;
+  --brand-green: #5cbd82;
+  --brand-gold: #f2b544;
+  --brand-orange: #f2a05c;
+
+  --background: #0c1b22;
+  --foreground: #e9f2f1;
+  --card: #12242d;
+  --card-foreground: #e9f2f1;
+  --popover: #12242d;
+  --popover-foreground: #e9f2f1;
+  --primary: #2ab5b1;
+  --primary-foreground: #06211f;
+  --secondary: #16303a;
+  --secondary-foreground: #d5e8e5;
+  --muted: #142a33;
+  --muted-foreground: #93aeb0;
+  --accent: #173440;
+  --accent-foreground: #d5e8e5;
+  --destructive: #f87171;
+  --border: #1e3742;
+  --input: #24404b;
+  --ring: #2ab5b1;
+  --chart-1: #2ab5b1;
+  --chart-2: #4a90d9;
+  --chart-3: #5cbd82;
+  --chart-4: #f2b544;
+  --chart-5: #f2a05c;
+  --sidebar: #12242d;
+  --sidebar-foreground: #e9f2f1;
+  --sidebar-primary: #2ab5b1;
+  --sidebar-primary-foreground: #06211f;
+  --sidebar-accent: #173440;
+  --sidebar-accent-foreground: #d5e8e5;
+  --sidebar-border: #1e3742;
+  --sidebar-ring: #2ab5b1;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Scrollbar kustom bernuansa teal */
+.wn-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.wn-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.wn-scroll::-webkit-scrollbar-thumb {
+  background: #9fd4d1;
+  border-radius: 8px;
+}
+.wn-scroll::-webkit-scrollbar-thumb:hover {
+  background: #159d9a;
+}
+
+/* Pola tekstil halus untuk latar section (nuansa tenun, bukan batik cokelat) */
+.wn-batik {
+  background-image: radial-gradient(circle at 1px 1px, rgba(21, 157, 154, 0.08) 1.5px, transparent 0);
+  background-size: 22px 22px;
+}
+
+/* Garis tepi gradasi emas-teal untuk kartu sorotan */
+.wn-edge-gold {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--card), var(--card)) padding-box,
+    linear-gradient(120deg, rgba(242, 181, 68, 0.55), rgba(21, 157, 154, 0.45), rgba(18, 97, 160, 0.35)) border-box;
+}
+
+/* Denyut penanda provinsi di peta */
+@keyframes wn-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.65;
+  }
+  70% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+.wn-marker-pulse {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: wn-pulse 2.2s ease-out infinite;
+}
+
+@keyframes wn-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+.wn-float {
+  animation: wn-float 5s ease-in-out infinite;
+}
