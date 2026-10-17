@@ -8,6 +8,7 @@
  * Peran Kurator (REVIEWER) bersifat baca-saja untuk konten; tab Pengguna
  * hanya dirender untuk Administrator (SUPER_ADMIN).
  */
+import { useState, useEffect } from 'react'
 import { useMe } from '@/hooks/use-waradata'
 import { useWaranusa } from '@/store/waranusa'
 import { ROLE_LABEL, type SessionUser } from '@/lib/types'
@@ -15,12 +16,16 @@ import { StatsTab } from './admin/stats-tab'
 import { ItemsTab } from './admin/items-tab'
 import { ProvincesTab } from './admin/provinces-tab'
 import { CategoriesTab } from './admin/categories-tab'
+import { MediaTab } from './admin/media-tab'
+import { SourcesTab } from './admin/sources-tab'
 import { ContributionsTab } from './admin/contributions-tab'
 import { UsersTab } from './admin/users-tab'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
+  BookMarked,
+  Image as ImageIcon,
   Inbox,
   LayoutDashboard,
   Library,
