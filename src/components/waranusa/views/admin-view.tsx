@@ -59,10 +59,40 @@ function PanelSkeleton() {
   )
 }
 
-export function AdminView() {
+export function AdminView({ initialTab }: { initialTab?: string }) {
   const { data: me, isLoading } = useMe()
   const setView = useWaranusa((s) => s.setView)
   const setLoginRedirect = useWaranusa((s) => s.setLoginRedirect)
+
+  // Normalisasi tab agar cocok dengan Section 14
+  const normalizeTab = (tab?: string) => {
+    if (!tab) return 'dashboard'
+    if (tab === 'objek') return 'cultural-items'
+    if (tab === 'wilayah') return 'regions'
+    if (tab === 'kategori') return 'categories'
+    if (tab === 'sumber') return 'sources'
+    if (tab === 'kontribusi') return 'contributions'
+    if (tab === 'pengguna') return 'users'
+    return tab
+  }
+
+  const [activeTab, setActiveTab] = useState(() => normalizeTab(initialTab))
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(normalizeTab(initialTab))
+    }
+  }, [initialTab])
+
+  const handleTabChange = (val: string) => {
+    setActiveTab(val)
+    if (typeof window !== 'undefined') {
+      const targetUrl = `/admin/${val}`
+      if (window.location.pathname !== targetUrl) {
+        window.history.replaceState(null, '', targetUrl)
+      }
+    }
+  }
 
   /* ---- Gate UX: hanya untuk tampilan; server tetap otoritas ---- */
 
@@ -128,9 +158,9 @@ export function AdminView() {
             <ShieldCheck className="h-6 w-6" />
           </span>
           <div>
-            <h1 className="font-display text-2xl font-bold text-foreground">Panel Pengelola</h1>
+            <h1 className="font-display text-2xl font-bold text-foreground">Panel Pengelola WaraNusa (CMS)</h1>
             <p className="text-xs text-muted-foreground sm:text-sm">
-              Kelola arsip budaya, wilayah, kategori, dan moderasi kontribusi.
+              Kelola arsip budaya, wilayah, kategori, media, sumber, dan moderasi kontribusi.
             </p>
           </div>
         </div>
@@ -145,25 +175,31 @@ export function AdminView() {
         </div>
       </header>
 
-      <Tabs defaultValue="dashboard" className="gap-4">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="gap-4">
         <TabsList className="h-auto w-full flex-wrap justify-start gap-1 rounded-xl p-1">
           <TabsTrigger value="dashboard" className="flex-none gap-1.5 px-3 py-1.5 text-[13px]">
             <LayoutDashboard className="h-4 w-4" /> Dashboard
           </TabsTrigger>
-          <TabsTrigger value="objek" className="flex-none gap-1.5 px-3 py-1.5 text-[13px]">
+          <TabsTrigger value="cultural-items" className="flex-none gap-1.5 px-3 py-1.5 text-[13px]">
             <Library className="h-4 w-4" /> Objek Budaya
           </TabsTrigger>
-          <TabsTrigger value="wilayah" className="flex-none gap-1.5 px-3 py-1.5 text-[13px]">
+          <TabsTrigger value="regions" className="flex-none gap-1.5 px-3 py-1.5 text-[13px]">
             <Map className="h-4 w-4" /> Wilayah
           </TabsTrigger>
-          <TabsTrigger value="kategori" className="flex-none gap-1.5 px-3 py-1.5 text-[13px]">
+          <TabsTrigger value="categories" className="flex-none gap-1.5 px-3 py-1.5 text-[13px]">
             <Library className="h-4 w-4" /> Kategori
           </TabsTrigger>
-          <TabsTrigger value="kontribusi" className="flex-none gap-1.5 px-3 py-1.5 text-[13px]">
-            <Inbox className="h-4 w-4" /> Kontribusi
+          <TabsTrigger value="media" className="flex-none gap-1.5 px-3 py-1.5 text-[13px]">
+            <ImageIcon className="h-4 w-4" /> Media
+          </TabsTrigger>
+          <TabsTrigger value="sources" className="flex-none gap-1.5 px-3 py-1.5 text-[13px]">
+            <BookMarked className="h-4 w-4" /> Sumber &amp; Atribusi
+          </TabsTrigger>
+          <TabsTrigger value="contributions" className="flex-none gap-1.5 px-3 py-1.5 text-[13px]">
+            <Inbox className="h-4 w-4" /> Moderasi
           </TabsTrigger>
           {isSuper && (
-            <TabsTrigger value="pengguna" className="flex-none gap-1.5 px-3 py-1.5 text-[13px]">
+            <TabsTrigger value="users" className="flex-none gap-1.5 px-3 py-1.5 text-[13px]">
               <Users className="h-4 w-4" /> Pengguna
             </TabsTrigger>
           )}
@@ -172,20 +208,26 @@ export function AdminView() {
         <TabsContent value="dashboard">
           <StatsTab />
         </TabsContent>
-        <TabsContent value="objek">
+        <TabsContent value="cultural-items">
           <ItemsTab role={me.role} />
         </TabsContent>
-        <TabsContent value="wilayah">
+        <TabsContent value="regions">
           <ProvincesTab role={me.role} />
         </TabsContent>
-        <TabsContent value="kategori">
+        <TabsContent value="categories">
           <CategoriesTab role={me.role} />
         </TabsContent>
-        <TabsContent value="kontribusi">
+        <TabsContent value="media">
+          <MediaTab role={me.role} />
+        </TabsContent>
+        <TabsContent value="sources">
+          <SourcesTab role={me.role} />
+        </TabsContent>
+        <TabsContent value="contributions">
           <ContributionsTab role={me.role} />
         </TabsContent>
         {isSuper && (
-          <TabsContent value="pengguna">
+          <TabsContent value="users">
             <UsersTab me={me as SessionUser} />
           </TabsContent>
         )}
