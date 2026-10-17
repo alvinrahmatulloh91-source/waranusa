@@ -15,8 +15,48 @@ import type {
   ContributionStatus,
   ItemSource,
   ItemStatus,
+  MediaAssetRecord,
+  MediaType,
   ProvinceSummary,
 } from '@/lib/types'
+
+export interface AdminMediaParams {
+  q?: string
+  type?: string
+  itemId?: string
+  page: number
+  pageSize: number
+}
+
+export interface AdminMediaPayload {
+  title: string
+  type: MediaType
+  url: string
+  license?: string | null
+  creator?: string | null
+  sourceUrl?: string | null
+  caption?: string | null
+  itemId?: string | null
+  isFeatured?: boolean
+}
+
+export interface AdminSourceParams {
+  q?: string
+  itemId?: string
+  license?: string
+  page: number
+  pageSize: number
+}
+
+export interface AdminSourcePayload {
+  title: string
+  url?: string | null
+  publisher?: string | null
+  year?: string | null
+  license?: string | null
+  note?: string | null
+  itemId: string
+}
 
 /** Record provinsi untuk admin: ringkasan + narasi deskriptif. */
 export type AdminProvinceRecord = ProvinceSummary & {
@@ -328,3 +368,129 @@ export function useUpdateUserRole() {
     },
   })
 }
+
+/* ---------- Media Assets ---------- */
+
+export function useAdminMedia(params: AdminMediaParams) {
+  return useQuery<{ media: MediaAssetRecord[]; meta: AdminItemsMeta }>({
+    queryKey: ['admin', 'media', params],
+    queryFn: async () => {
+      const sp = new URLSearchParams()
+      if (params.q) sp.set('q', params.q)
+      if (params.type) sp.set('type', params.type)
+      if (params.itemId) sp.set('itemId', params.itemId)
+      sp.set('page', String(params.page))
+      sp.set('pageSize', String(params.pageSize))
+      return fetchAdmin(`/api/admin/media?${sp.toString()}`)
+    },
+    retry: false,
+    staleTime: 10_000,
+  })
+}
+
+export function useCreateAdminMedia() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: AdminMediaPayload) =>
+      fetchAdmin<{ media: MediaAssetRecord }>('/api/admin/media', jsonBody(payload)),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['admin', 'media'] })
+      void qc.invalidateQueries({ queryKey: ['admin', 'stats'] })
+    },
+  })
+}
+
+export function useUpdateAdminMedia() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: Partial<AdminMediaPayload> & { id: string }) =>
+      fetchAdmin<{ media: MediaAssetRecord }>(`/api/admin/media/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['admin', 'media'] })
+      void qc.invalidateQueries({ queryKey: ['admin', 'stats'] })
+    },
+  })
+}
+
+export function useDeleteAdminMedia() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) =>
+      fetchAdmin<{ ok: boolean; id: string }>(`/api/admin/media/${id}`, {
+        method: 'DELETE',
+      }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['admin', 'media'] })
+      void qc.invalidateQueries({ queryKey: ['admin', 'stats'] })
+    },
+  })
+}
+
+/* ---------- Sources / Referensi ---------- */
+
+export function useAdminSources(params: AdminSourceParams) {
+  return useQuery<{ sources: (ItemSource & { culturalItem?: { id: string; name: string; category: string } })[]; meta: AdminItemsMeta }>({
+    queryKey: ['admin', 'sources', params],
+    queryFn: async () => {
+      const sp = new URLSearchParams()
+      if (params.q) sp.set('q', params.q)
+      if (params.itemId) sp.set('itemId', params.itemId)
+      if (params.license) sp.set('license', params.license)
+      sp.set('page', String(params.page))
+      sp.set('pageSize', String(params.pageSize))
+      return fetchAdmin(`/api/admin/sources?${sp.toString()}`)
+    },
+    retry: false,
+    staleTime: 10_000,
+  })
+}
+
+export function useCreateAdminSource() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload: AdminSourcePayload) =>
+      fetchAdmin<{ source: ItemSource }>('/api/admin/sources', jsonBody(payload)),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['admin', 'sources'] })
+      void qc.invalidateQueries({ queryKey: ['admin', 'items'] })
+      void qc.invalidateQueries({ queryKey: ['admin', 'stats'] })
+    },
+  })
+}
+
+export function useUpdateAdminSource() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: Partial<AdminSourcePayload> & { id: string }) =>
+      fetchAdmin<{ source: ItemSource }>(`/api/admin/sources/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['admin', 'sources'] })
+      void qc.invalidateQueries({ queryKey: ['admin', 'items'] })
+      void qc.invalidateQueries({ queryKey: ['admin', 'stats'] })
+    },
+  })
+}
+
+export function useDeleteAdminSource() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) =>
+      fetchAdmin<{ ok: boolean; id: string }>(`/api/admin/sources/${id}`, {
+        method: 'DELETE',
+      }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['admin', 'sources'] })
+      void qc.invalidateQueries({ queryKey: ['admin', 'items'] })
+      void qc.invalidateQueries({ queryKey: ['admin', 'stats'] })
+    },
+  })
+}
+
