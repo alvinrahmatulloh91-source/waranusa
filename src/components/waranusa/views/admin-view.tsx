@@ -8,7 +8,7 @@
  * Peran Kurator (REVIEWER) bersifat baca-saja untuk konten; tab Pengguna
  * hanya dirender untuk Administrator (SUPER_ADMIN).
  */
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useMe } from '@/hooks/use-waradata'
 import { useWaranusa } from '@/store/waranusa'
 import { ROLE_LABEL, type SessionUser } from '@/lib/types'
@@ -77,12 +77,6 @@ export function AdminView({ initialTab }: { initialTab?: string }) {
   }
 
   const [activeTab, setActiveTab] = useState(() => normalizeTab(initialTab))
-
-  useEffect(() => {
-    if (initialTab) {
-      setActiveTab(normalizeTab(initialTab))
-    }
-  }, [initialTab])
 
   const handleTabChange = (val: string) => {
     setActiveTab(val)

@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { requireRole } from '@/lib/auth'
 import type { Prisma } from '@prisma/client'
 import type { UserRole } from '@/lib/types'
+import { isSafeContentUrl } from '@/lib/admin-item'
 
 export const dynamic = 'force-dynamic'
 
@@ -105,6 +106,9 @@ export async function POST(req: NextRequest) {
     }
     if (!itemId) {
       return NextResponse.json({ error: 'Objek budaya wajib dipilih.' }, { status: 400 })
+    }
+    if (url && !isSafeContentUrl(url, true)) {
+      return NextResponse.json({ error: 'URL sumber harus menggunakan HTTP atau HTTPS.' }, { status: 400 })
     }
 
     const item = await db.culturalItem.findUnique({

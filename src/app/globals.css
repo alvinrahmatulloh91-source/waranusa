@@ -1,5 +1,12 @@
 @import "tailwindcss";
+
 @import "tw-animate-css";
+
+:root {
+  --font-jakarta: "Plus Jakarta Sans", Arial, sans-serif;
+  --font-fraunces: Fraunces, Georgia, serif;
+  --font-geist-mono: "Geist Mono", monospace;
+}
 
 @custom-variant dark (&:is(.dark *));
 

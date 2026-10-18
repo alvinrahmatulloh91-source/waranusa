@@ -3,7 +3,7 @@
  * Tidak membutuhkan file audio eksternal; semua suara disintesis secara real-time.
  */
 
-export type SoundType = 'gamelan' | 'gong' | 'drum' | 'bamboo' | 'pluck' | 'wood' | 'frame'
+export type SoundType = 'gamelan' | 'gong' | 'drum' | 'bamboo' | 'pluck' | 'wood' | 'frame' | 'bow'
 
 export interface SoundParam {
   id: string
@@ -225,7 +225,46 @@ class InstrumentAudio {
     this.osc(freq * 2, 'sine', t0, 0.4, 0.06)
   }
 
-  play(sound: SoundParam) {
+  /** Instrumen gesek (rebab): getaran senar gesek dengan vibrato dan dinamika busur virtual. */
+  bow(freq: number, intensity = 1.0) {
+    const ctx = this.ensure()
+    const t0 = this.now()
+    const o = ctx.createOscillator()
+    o.type = 'sawtooth'
+    o.frequency.setValueAtTime(freq, t0)
+
+    // LFO vibrato lembut khas gesekan rebab tradisional
+    const lfo = ctx.createOscillator()
+    lfo.frequency.value = 5.2
+    const lfoGain = ctx.createGain()
+    lfoGain.gain.value = 3.8
+    lfo.connect(lfoGain)
+    lfoGain.connect(o.detune)
+
+    const f = ctx.createBiquadFilter()
+    f.type = 'bandpass'
+    f.frequency.setValueAtTime(1200 + Math.min(intensity, 2) * 500, t0)
+    f.Q.value = 1.4
+
+    const g = ctx.createGain()
+    const dur = 0.8 + Math.min(intensity, 2) * 0.4
+    const peak = Math.min(0.34 * Math.max(0.4, intensity), 0.5)
+    this.env(g, t0, peak, 0.05, dur)
+
+    o.connect(f)
+    f.connect(g)
+    g.connect(this.master!)
+
+    o.start(t0)
+    lfo.start(t0)
+    o.stop(t0 + dur + 0.1)
+    lfo.stop(t0 + dur + 0.1)
+
+    // Desisan gesekan rambut busur pada dawai
+    this.strikeNoise(0.12, 2800, 0.05 * Math.min(intensity, 1.5))
+  }
+
+  play(sound: SoundParam, intensity = 1.0) {
     try {
       switch (sound.type) {
         case 'gamelan':
@@ -248,6 +287,9 @@ class InstrumentAudio {
           break
         case 'pluck':
           this.pluck(sound.freq)
+          break
+        case 'bow':
+          this.bow(sound.freq, intensity)
           break
       }
     } catch (e) {

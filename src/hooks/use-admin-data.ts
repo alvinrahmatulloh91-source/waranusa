@@ -88,6 +88,7 @@ export interface AdminItemPayload {
   name: string
   category: string
   provinceId: string
+  region?: string | null
   shortDesc: string
   description: string
   philosophy?: string

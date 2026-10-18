@@ -116,6 +116,7 @@ export interface CategoryMeta {
 
 export interface CulturalItemFull {
   id: string
+  slug?: string | null
   provinceId: string
   /** Key kategori, mis. RUMAH_ADAT — label ditampilkan via kategori API. */
   category: string
@@ -123,6 +124,8 @@ export interface CulturalItemFull {
   region: string | null
   shortDesc: string
   description: string
+  history: string | null
+  culturalFunction: string | null
   philosophy: string
   imageUrl: string | null
   model3d: string | null
@@ -135,6 +138,7 @@ export interface CulturalItemFull {
   status: ItemStatus
   /**true bila konten/sumber masih perlu diverifikasi kurator. */
   needsReview: boolean
+  isDemonstration: boolean
   createdAt?: string
   updatedAt?: string
   province?: { name: string; slug: string; island: string }

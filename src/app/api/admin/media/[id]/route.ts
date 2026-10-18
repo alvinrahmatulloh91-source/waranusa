@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireRole } from '@/lib/auth'
 import { mapMediaAsset } from '@/lib/serialize'
+import { isSafeContentUrl } from '@/lib/admin-item'
 import type { UserRole } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
@@ -27,10 +28,22 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     const data: Record<string, unknown> = {}
     if (typeof body.title === 'string') data.title = body.title.trim()
     if (typeof body.type === 'string' && VALID_TYPES.includes(body.type.trim())) data.type = body.type.trim()
-    if (typeof body.url === 'string') data.url = body.url.trim()
+    if (typeof body.url === 'string') {
+      const url = body.url.trim()
+      if (!url || !isSafeContentUrl(url)) {
+        return NextResponse.json({ error: 'URL media harus berupa path lokal atau URL HTTPS.' }, { status: 400 })
+      }
+      data.url = url
+    }
     if (body.license !== undefined) data.license = typeof body.license === 'string' ? body.license.trim() || null : null
     if (body.creator !== undefined) data.creator = typeof body.creator === 'string' ? body.creator.trim() || null : null
-    if (body.sourceUrl !== undefined) data.sourceUrl = typeof body.sourceUrl === 'string' ? body.sourceUrl.trim() || null : null
+    if (body.sourceUrl !== undefined) {
+      const sourceUrl = typeof body.sourceUrl === 'string' ? body.sourceUrl.trim() : ''
+      if (sourceUrl && !isSafeContentUrl(sourceUrl, true)) {
+        return NextResponse.json({ error: 'URL sumber media harus menggunakan HTTP atau HTTPS.' }, { status: 400 })
+      }
+      data.sourceUrl = sourceUrl || null
+    }
     if (body.caption !== undefined) data.caption = typeof body.caption === 'string' ? body.caption.trim() || null : null
     if (body.itemId !== undefined) data.itemId = typeof body.itemId === 'string' && body.itemId.trim() ? body.itemId.trim() : null
     if (body.isFeatured !== undefined) data.isFeatured = Boolean(body.isFeatured)

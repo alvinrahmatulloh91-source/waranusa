@@ -99,6 +99,7 @@ export function DetailView() {
               ? `${item.province.name} • ${ISLAND_MAP[item.province.island]?.label ?? 'Indonesia'}`
               : 'Indonesia'}
           </Badge>
+          {item.isDemonstration && <Badge variant="secondary">Konten demonstrasi</Badge>}
           {item.needsReview && (
             <Badge variant="outline" className="border-amber-500/40 bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
               <TriangleAlert className="h-3 w-3" aria-hidden /> Sumber perlu dilengkapi
@@ -121,16 +122,21 @@ export function DetailView() {
         )}
       </header>
 
-      {/* Media: 3D / ilustrasi */}
+      {/* Media: 3D / ilustrasi / galeri */}
       <figure className="mt-6 space-y-1.5">
-        {item.model3d ? (
-          <Tabs defaultValue="model" className="w-full">
-            <TabsList className="mb-3">
+        <Tabs defaultValue={item.model3d ? 'model' : 'ilustrasi'} className="w-full">
+          <TabsList className="mb-3">
+            {item.model3d && (
               <TabsTrigger value="model" className="gap-1.5">
                 <Box className="h-3.5 w-3.5" aria-hidden /> Model 3D Interaktif
               </TabsTrigger>
-              <TabsTrigger value="ilustrasi">Ilustrasi</TabsTrigger>
-            </TabsList>
+            )}
+            <TabsTrigger value="ilustrasi">Ilustrasi</TabsTrigger>
+            {item.mediaAssets && item.mediaAssets.length > 0 && (
+              <TabsTrigger value="galeri">Galeri Media ({item.mediaAssets.length})</TabsTrigger>
+            )}
+          </TabsList>
+          {item.model3d && (
             <TabsContent value="model">
               <ThreeViewer
                 model3d={item.model3d}
@@ -140,29 +146,57 @@ export function DetailView() {
                 playable={item.playable}
               />
             </TabsContent>
-            <TabsContent value="ilustrasi">
-              <div className="overflow-hidden rounded-xl border shadow-sm">
-                <img
-                  src={item.imageUrl ?? CATEGORY_MAP[item.category]?.image ?? '/images/arsip-banner.png'}
-                  alt={`Ilustrasi ${item.name}`}
-                  className="h-64 w-full object-cover sm:h-80"
-                  width={1152}
-                  height={864}
-                />
+          )}
+          <TabsContent value="ilustrasi">
+            <div className="overflow-hidden rounded-xl border shadow-sm">
+              <img
+                src={item.imageUrl ?? CATEGORY_MAP[item.category]?.image ?? '/images/arsip-banner.png'}
+                alt={`Ilustrasi ${item.name}`}
+                className="h-64 w-full object-cover sm:h-80"
+                width={1152}
+                height={864}
+              />
+            </div>
+          </TabsContent>
+          {item.mediaAssets && item.mediaAssets.length > 0 && (
+            <TabsContent value="galeri">
+              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+                {item.mediaAssets.map((m) => (
+                  <div key={m.id} className="overflow-hidden rounded-xl border bg-card p-2.5 shadow-sm">
+                    {m.type === 'IMAGE' ? (
+                      <img
+                        src={m.url}
+                        alt={m.title}
+                        className="h-40 w-full rounded-lg object-cover"
+                        onError={(e) => {
+                          ;(e.currentTarget as HTMLImageElement).src = '/images/arsip-banner.png'
+                        }}
+                      />
+                    ) : m.type === 'AUDIO' ? (
+                      <div className="flex h-40 flex-col items-center justify-center rounded-lg bg-muted/60 p-3 text-center">
+                        <Volume2 className="h-8 w-8 text-primary" />
+                        <audio controls className="mt-2 h-7 w-full max-w-[180px]" src={m.url} />
+                      </div>
+                    ) : (
+                      <div className="flex h-40 flex-col items-center justify-center rounded-lg bg-muted/60 p-3 text-center">
+                        <Box className="h-8 w-8 text-primary" />
+                        <span className="mt-1 text-xs font-semibold">{m.title}</span>
+                      </div>
+                    )}
+                    <div className="mt-2 space-y-0.5">
+                      <p className="font-semibold text-xs text-foreground line-clamp-1">{m.title}</p>
+                      {m.caption && <p className="text-[11px] text-muted-foreground line-clamp-1">{m.caption}</p>}
+                      <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-1 border-t">
+                        <span>{m.license ?? 'Hak Cipta Dilindungi'}</span>
+                        {m.creator && <span>Oleh {m.creator}</span>}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </TabsContent>
-          </Tabs>
-        ) : (
-          <div className="overflow-hidden rounded-xl border shadow-sm">
-            <img
-              src={item.imageUrl ?? CATEGORY_MAP[item.category]?.image ?? '/images/arsip-banner.png'}
-              alt={`Ilustrasi ${item.name}`}
-              className="h-64 w-full object-cover sm:h-80"
-              width={1152}
-              height={864}
-            />
-          </div>
-        )}
+          )}
+        </Tabs>
         <p className="text-[11px] italic text-muted-foreground">{AI_ILLUSTRATION_NOTE}</p>
       </figure>
 
@@ -196,13 +230,29 @@ export function DetailView() {
         <p className="text-sm leading-relaxed text-foreground sm:text-[15px]">{item.description}</p>
       </section>
 
+      {item.history && (
+        <section className="mt-6 rounded-2xl border bg-card p-4 sm:p-5">
+          <h2 className="mb-1.5 text-sm font-bold uppercase tracking-wide text-muted-foreground">Sejarah &amp; Konteks</h2>
+          <p className="whitespace-pre-line text-sm leading-relaxed text-foreground/90">{item.history}</p>
+        </section>
+      )}
+
+      {item.culturalFunction && (
+        <section className="mt-6 rounded-2xl border bg-card p-4 sm:p-5">
+          <h2 className="mb-1.5 text-sm font-bold uppercase tracking-wide text-muted-foreground">Fungsi Budaya</h2>
+          <p className="whitespace-pre-line text-sm leading-relaxed text-foreground/90">{item.culturalFunction}</p>
+        </section>
+      )}
+
       {/* Filosofi */}
+      {item.philosophy?.trim() && !item.philosophy.toLowerCase().startsWith('belum didokumentasikan') && (
       <section className="mt-6 rounded-2xl border border-brand-gold/40 bg-brand-gold/10 p-4 sm:p-5">
         <h2 className="mb-1.5 flex items-center gap-1.5 text-sm font-bold uppercase tracking-wide text-foreground">
           <Lightbulb className="h-4 w-4 text-brand-orange" aria-hidden /> Filosofi &amp; Makna
         </h2>
         <p className="text-sm leading-relaxed text-foreground/90">{item.philosophy}</p>
       </section>
+      )}
 
       {/* Bagian & makna */}
       {item.parts.length > 0 && (

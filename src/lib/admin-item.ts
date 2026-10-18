@@ -5,6 +5,19 @@
  */
 import { ITEM_STATUSES } from '@/lib/types'
 
+/** URLs media boleh berupa path lokal atau URL HTTPS; sumber boleh URL HTTP(S). */
+export function isSafeContentUrl(value: string, allowHttp = false): boolean {
+  if (value.startsWith('/') && !value.startsWith('//') && !value.includes('\\')) return true
+  try {
+    const url = new URL(value)
+    return allowHttp
+      ? url.protocol === 'https:' || url.protocol === 'http:'
+      : url.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
 export interface SourceInput {
   title: string
   url: string | null
@@ -15,10 +28,13 @@ export interface SourceInput {
 }
 
 export interface ParsedItemFields {
+  slug?: string
   name?: string
   region?: string | null
   shortDesc?: string
   description?: string
+  history?: string | null
+  culturalFunction?: string | null
   philosophy?: string
   imageUrl?: string | null
   model3d?: string | null
@@ -28,6 +44,7 @@ export interface ParsedItemFields {
   melody?: string | null
   status?: string
   needsReview?: boolean
+  isDemonstration?: boolean
   category?: string
   provinceId?: string
   sources?: SourceInput[]
@@ -64,9 +81,13 @@ function parseSources(raw: unknown): { error?: string; sources?: SourceInput[] }
     const row = (s ?? {}) as Record<string, unknown>
     const title = asTrimmed(row.title)
     if (!title) return { error: 'Setiap sumber harus memiliki judul.' }
+    const url = optionalText(row.url) ?? null
+    if (url && !isSafeContentUrl(url, true)) {
+      return { error: 'URL sumber harus menggunakan HTTP atau HTTPS.' }
+    }
     sources.push({
       title: title.slice(0, 200),
-      url: optionalText(row.url) ?? null,
+      url,
       publisher: optionalText(row.publisher) ?? null,
       year: optionalText(row.year) ?? null,
       license: optionalText(row.license) ?? null,
@@ -93,6 +114,13 @@ export function parseItemBody(
     }
     fields.name = name
   }
+  if ('slug' in body || !partial) {
+    const slug = asTrimmed(body.slug).toLowerCase()
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || slug.length > 140) {
+      return { error: 'Slug wajib berupa huruf kecil, angka, dan tanda hubung (maks 140 karakter).' }
+    }
+    fields.slug = slug
+  }
   if ('region' in body) {
     const region = optionalText(body.region)
     if (region !== undefined) fields.region = region
@@ -111,13 +139,27 @@ export function parseItemBody(
     }
     fields.description = description
   }
+  if ('history' in body) {
+    const history = optionalText(body.history)
+    if (history && history.length > 5000) return { error: 'Informasi sejarah maksimal 5000 karakter.' }
+    if (history !== undefined) fields.history = history
+  }
+  if ('culturalFunction' in body) {
+    const culturalFunction = optionalText(body.culturalFunction)
+    if (culturalFunction && culturalFunction.length > 3000) return { error: 'Fungsi budaya maksimal 3000 karakter.' }
+    if (culturalFunction !== undefined) fields.culturalFunction = culturalFunction
+  }
   if ('philosophy' in body || !partial) {
-    const philosophy = asTrimmed(body.philosophy)
-    if (!philosophy) return { error: 'Filosofi wajib diisi.' }
-    fields.philosophy = philosophy
+    const philosophy = optionalText(body.philosophy)
+    if (philosophy && philosophy.length > 3000) return { error: 'Informasi makna budaya maksimal 3000 karakter.' }
+    if (philosophy !== undefined) fields.philosophy = philosophy ?? ''
+    else if (!partial) fields.philosophy = ''
   }
   if ('imageUrl' in body) {
     const imageUrl = optionalText(body.imageUrl)
+    if (imageUrl && !isSafeContentUrl(imageUrl)) {
+      return { error: 'URL gambar harus berupa path lokal atau URL HTTPS.' }
+    }
     if (imageUrl !== undefined) fields.imageUrl = imageUrl
   }
   if ('model3d' in body) {
@@ -171,6 +213,12 @@ export function parseItemBody(
     fields.needsReview = body.needsReview
   } else if (!partial) {
     fields.needsReview = false
+  }
+  if ('isDemonstration' in body) {
+    if (typeof body.isDemonstration !== 'boolean') return { error: 'isDemonstration harus berupa boolean.' }
+    fields.isDemonstration = body.isDemonstration
+  } else if (!partial) {
+    fields.isDemonstration = false
   }
   if ('sources' in body) {
     const parsed = parseSources(body.sources)

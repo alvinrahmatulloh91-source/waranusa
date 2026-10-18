@@ -55,17 +55,22 @@ model Category {
   image       String // path gambar ilustrasi kategori
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  culturalItems CulturalItem[]
 }
 
 model CulturalItem {
   id          String   @id @default(cuid())
+  slug        String?  @unique
   provinceId  String
   province    Province @relation(fields: [provinceId], references: [id], onDelete: Cascade)
-  category    String // key kategori (relasi logis ke Category.key)
+  category    String
+  categoryMeta Category @relation(fields: [category], references: [key], onUpdate: Cascade, onDelete: Restrict)
   name        String
   region      String? // suku/etnis asal
   shortDesc   String
   description String
+  history     String?
+  culturalFunction String?
   philosophy  String
   imageUrl    String? // path gambar ilustrasi
   model3d     String? // kunci arketipe model 3D prosedural
@@ -75,10 +80,15 @@ model CulturalItem {
   melody      String? // JSON: [soundId,...] melodi demo
   status      String   @default("PUBLISHED") // DRAFT | PENDING_REVIEW | PUBLISHED | REJECTED | ARCHIVED
   needsReview Boolean  @default(false) // sumber/konten perlu verifikasi kurator
+  isDemonstration Boolean @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   sources     CulturalSource[]
   mediaAssets MediaAsset[]
+
+  @@index([status, updatedAt])
+  @@index([provinceId, category])
+  @@index([category])
 }
 
 model CulturalSource {
@@ -92,6 +102,8 @@ model CulturalSource {
   license      String?
   note         String?
   createdAt    DateTime     @default(now())
+
+  @@index([itemId])
 }
 
 model Contribution {
@@ -113,6 +125,9 @@ model Contribution {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   reviews         ModerationReview[]
+
+  @@index([status, createdAt])
+  @@index([userId, createdAt])
 }
 
 model ModerationReview {
@@ -124,6 +139,8 @@ model ModerationReview {
   action         String // aksi moderasi: UNDER_REVIEW | APPROVED | REJECTED | NEEDS_REVISION
   note           String?
   createdAt      DateTime     @default(now())
+
+  @@index([contributionId, createdAt])
 }
 
 model MediaAsset {
@@ -142,5 +159,7 @@ model MediaAsset {
   isFeatured   Boolean       @default(false)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+
+  @@index([itemId, type])
 }
 

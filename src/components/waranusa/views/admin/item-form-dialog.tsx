@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
@@ -51,6 +52,11 @@ interface SourceRow {
 
 const EMPTY_ROW: SourceRow = { title: '', url: '', publisher: '', year: '', license: '', note: '' }
 
+function slugify(value: string) {
+  return value.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').trim()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+}
+
 function toRows(item: AdminItemRecord): SourceRow[] {
   return item.sources.map((s: ItemSource) => ({
     title: s.title ?? '',
@@ -60,6 +66,15 @@ function toRows(item: AdminItemRecord): SourceRow[] {
     license: s.license ?? '',
     note: s.note ?? '',
   }))
+}
+
+function PreviewSection({ title, value }: { title: string; value: string }) {
+  return (
+    <div className="border-t pt-3">
+      <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{title}</h4>
+      <p className="mt-1 whitespace-pre-line text-xs leading-relaxed text-foreground sm:text-sm">{value}</p>
+    </div>
+  )
 }
 
 export function ItemFormDialog({
@@ -82,18 +97,25 @@ export function ItemFormDialog({
   // State diinisialisasi dari item target; komponen di-remount per item
   // lewat prop key pada pemakaian (lihat items-tab) sehingga form selalu segar.
   const [name, setName] = useState(item?.name ?? '')
+  const [slug, setSlug] = useState(item?.slug ?? slugify(item?.name ?? ''))
+  const [slugEdited, setSlugEdited] = useState(!!item?.slug)
   const [category, setCategory] = useState(item?.category ?? '')
   const [provinceId, setProvinceId] = useState(item?.provinceId ?? '')
+  const [region, setRegion] = useState(item?.region ?? '')
   const [shortDesc, setShortDesc] = useState(item?.shortDesc ?? '')
   const [description, setDescription] = useState(item?.description ?? '')
+  const [history, setHistory] = useState(item?.history ?? '')
+  const [culturalFunction, setCulturalFunction] = useState(item?.culturalFunction ?? '')
   const [philosophy, setPhilosophy] = useState(item?.philosophy ?? '')
   const [status, setStatus] = useState<ItemStatus>(item?.status ?? 'DRAFT')
   const [playable, setPlayable] = useState(item?.playable ?? false)
   const [needsReview, setNeedsReview] = useState(item?.needsReview ?? false)
+  const [isDemonstration, setIsDemonstration] = useState(item?.isDemonstration ?? false)
   const [imageUrl, setImageUrl] = useState(item?.imageUrl ?? '')
   const [model3d, setModel3d] = useState(item?.model3d ?? '')
   const [sources, setSources] = useState<SourceRow[]>(() => (item ? toRows(item) : []))
   const [sourcesDirty, setSourcesDirty] = useState(false)
+  const [activeMode, setActiveMode] = useState<'form' | 'preview'>('form')
   const [formError, setFormError] = useState<string | null>(null)
 
   const categoryOptions = useMemo(
@@ -107,12 +129,12 @@ export function ItemFormDialog({
 
   const validate = (): string | null => {
     if (name.trim().length < 3 || name.trim().length > 120) return 'Nama objek harus 3-120 karakter.'
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || slug.length > 140) return 'Slug wajib berupa huruf kecil, angka, dan tanda hubung.'
     if (!category) return 'Kategori wajib dipilih.'
     if (!provinceId) return 'Provinsi wajib dipilih.'
     const sd = shortDesc.trim()
     if (sd.length < 10 || sd.length > 200) return 'Ringkasan harus 10-200 karakter.'
     if (description.trim().length < 20) return 'Deskripsi lengkap minimal 20 karakter.'
-    if (!isEdit && !philosophy.trim()) return 'Filosofi wajib diisi saat membuat objek baru.'
     for (const s of sources) {
       const hasContent = s.title.trim() || s.url.trim() || s.publisher.trim() || s.year.trim() || s.note.trim()
       if (hasContent && !s.title.trim()) return 'Setiap sumber harus memiliki judul.'
@@ -142,14 +164,19 @@ export function ItemFormDialog({
 
     const base = {
       name: name.trim(),
+      slug: slug.trim(),
       category,
       provinceId,
+      region: region.trim() || null,
       shortDesc: shortDesc.trim(),
       description: description.trim(),
+      history: history.trim() || null,
+      culturalFunction: culturalFunction.trim() || null,
       imageUrl: imageUrl.trim(),
       model3d: model3d.trim(),
       playable,
       needsReview,
+      isDemonstration,
       status,
     }
 
@@ -159,7 +186,7 @@ export function ItemFormDialog({
     }
 
     if (isEdit && item) {
-      // Filosofi dikirim hanya bila terisi (server menolak string kosong pada PATCH).
+      // Makna budaya bersifat opsional dan hanya diisi bila didukung rujukan.
       const philosophyTrim = philosophy.trim()
       updateMut.mutate(
         {
@@ -199,69 +226,217 @@ export function ItemFormDialog({
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col overflow-hidden">
         <DialogHeader className="shrink-0 pr-6">
-          <DialogTitle className="font-display text-xl">
-            {isEdit ? 'Edit Objek Budaya' : 'Tambah Objek Budaya'}
-          </DialogTitle>
-          <DialogDescription>
-            {isEdit
-              ? 'Perbarui informasi objek. Bagian 3D dan padatan suara tetap tersimpan.'
-              : 'Lengkapi data objek budaya baru sebelum dipublikasikan ke arsip.'}
-          </DialogDescription>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <DialogTitle className="font-display text-xl">
+                {isEdit ? 'Edit Objek Budaya' : 'Tambah Objek Budaya'}
+              </DialogTitle>
+              <DialogDescription>
+                {isEdit
+                  ? 'Perbarui informasi objek. Bagian 3D dan padatan suara tetap tersimpan.'
+                  : 'Lengkapi data objek budaya baru sebelum dipublikasikan ke arsip.'}
+              </DialogDescription>
+            </div>
+            <div className="flex rounded-lg border bg-muted p-0.5 text-xs">
+              <button
+                type="button"
+                onClick={() => setActiveMode('form')}
+                className={`rounded-md px-3 py-1 font-medium transition ${
+                  activeMode === 'form'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Formulir
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveMode('preview')}
+                className={`rounded-md px-3 py-1 font-medium transition ${
+                  activeMode === 'preview'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Pratinjau
+              </button>
+            </div>
+          </div>
         </DialogHeader>
 
         <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
-          <div className="wn-scroll min-h-0 flex-1 space-y-4 overflow-y-auto pr-2">
-            {formError && (
-              <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">
-                {formError}
-              </p>
-            )}
+          {activeMode === 'preview' ? (
+            <div className="wn-scroll min-h-0 flex-1 space-y-4 overflow-y-auto p-1 pr-2">
+              <div className="rounded-xl border bg-card p-5 shadow-sm space-y-4">
+                <div className="overflow-hidden rounded-xl border bg-muted/40 aspect-video w-full max-h-56">
+                  <img
+                    src={imageUrl.trim() || '/images/rumah-adat.png'}
+                    alt={name || 'Pratinjau'}
+                    className="h-full w-full object-cover"
+                    onError={(e) => {
+                      ;(e.currentTarget as HTMLImageElement).src = '/images/rumah-adat.png'
+                    }}
+                  />
+                </div>
 
-            <div className="grid gap-1.5">
-              <Label htmlFor="it-name">Nama objek</Label>
-              <Input
-                id="it-name"
-                required
-                minLength={3}
-                maxLength={120}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Contoh: Joglo Sinom"
-              />
-            </div>
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <Badge className="bg-primary text-primary-foreground">
+                      {categoryOptions.find((c) => c.key === category)?.label ?? (category || 'Kategori')}
+                    </Badge>
+                    <Badge variant="outline" className="border-primary/30 text-primary">
+                      {provinces?.find((p) => p.id === provinceId)?.name ?? 'Provinsi'}
+                    </Badge>
+                    {region && <Badge variant="secondary">{region}</Badge>}
+                    <Badge variant="outline" className="text-[11px]">
+                      {status}
+                    </Badge>
+                    {playable && (
+                      <Badge className="bg-emerald-600/10 text-emerald-700" variant="outline">
+                        Bisa Dimainkan
+                      </Badge>
+                    )}
+                    {needsReview && (
+                      <Badge className="border-amber-500/40 bg-amber-50 text-amber-700" variant="outline">
+                        Perlu Tinjauan Sumber
+                      </Badge>
+                    )}
+                    {isDemonstration && <Badge variant="secondary">Konten demonstrasi</Badge>}
+                  </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="grid gap-1.5">
-                <Label htmlFor="it-category">Kategori</Label>
-                <Select value={category || undefined} onValueChange={setCategory}>
-                  <SelectTrigger id="it-category">
-                    <SelectValue placeholder="Pilih kategori" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-64">
-                    {categoryOptions.map((c) => (
-                      <SelectItem key={c.key} value={c.key}>
-                        {c.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-1.5">
-                <Label htmlFor="it-province">Provinsi</Label>
-                <Select value={provinceId || undefined} onValueChange={setProvinceId}>
-                  <SelectTrigger id="it-province">
-                    <SelectValue placeholder="Pilih provinsi" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-64">
-                    {(provinces ?? []).map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <h3 className="font-display text-2xl font-bold text-foreground">
+                    {name || 'Nama Objek Budaya'}
+                  </h3>
+                  <p className="text-sm italic text-muted-foreground">
+                    {shortDesc || 'Ringkasan singkat akan muncul di sini...'}
+                  </p>
+
+                  <div className="border-t pt-3">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      Deskripsi Lengkap
+                    </h4>
+                    <p className="mt-1 text-xs sm:text-sm text-foreground leading-relaxed whitespace-pre-line">
+                      {description || 'Deskripsi lengkap objek belum diisi...'}
+                    </p>
+                  </div>
+
+                  {history && <PreviewSection title="Sejarah & Konteks" value={history} />}
+                  {culturalFunction && <PreviewSection title="Fungsi Budaya" value={culturalFunction} />}
+
+                  {philosophy && (
+                    <div className="rounded-xl border border-brand-gold/40 bg-brand-gold/10 p-3.5">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                        Filosofi &amp; Makna Budaya
+                      </h4>
+                      <p className="mt-1 text-xs text-foreground/90 leading-relaxed">
+                        {philosophy}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="border-t pt-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        Sumber &amp; Atribusi ({sources.filter((s) => s.title.trim()).length})
+                      </h4>
+                      {sources.filter((s) => s.title.trim()).length < 2 && (
+                        <span className="text-[11px] text-amber-600">
+                          (Disarankan minimal 2 sumber referensi)
+                        </span>
+                      )}
+                    </div>
+                    {sources.filter((s) => s.title.trim()).length === 0 ? (
+                      <p className="text-xs text-muted-foreground italic">Belum ada sumber referensi.</p>
+                    ) : (
+                      <ul className="space-y-1.5">
+                        {sources
+                          .filter((s) => s.title.trim())
+                          .map((s, idx) => (
+                            <li key={idx} className="rounded-lg border bg-muted/20 p-2 text-xs">
+                              <span className="font-semibold text-foreground">{s.title}</span>
+                              {(s.publisher || s.year) && (
+                                <span className="text-muted-foreground">
+                                  {' '}• {[s.publisher, s.year].filter(Boolean).join(', ')}
+                                </span>
+                              )}
+                              {s.license && (
+                                <span className="ml-1.5 inline-block text-[11px] text-primary">
+                                  [{s.license}]
+                                </span>
+                              )}
+                            </li>
+                          ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
+          ) : (
+            <div className="wn-scroll min-h-0 flex-1 space-y-4 overflow-y-auto pr-2">
+              {formError && (
+                <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">
+                  {formError}
+                </p>
+              )}
+
+              <div className="grid gap-1.5">
+                <Label htmlFor="it-name">Nama objek</Label>
+                <Input
+                  id="it-name"
+                  required
+                  minLength={3}
+                  maxLength={120}
+                  value={name}
+                  onChange={(e) => {
+                    setName(e.target.value)
+                    if (!slugEdited) setSlug(slugify(e.target.value))
+                  }}
+                  placeholder="Contoh: Joglo Sinom"
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="grid gap-1.5">
+                  <Label htmlFor="it-category">Kategori</Label>
+                  <Select value={category || undefined} onValueChange={setCategory}>
+                    <SelectTrigger id="it-category">
+                      <SelectValue placeholder="Pilih kategori" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-64">
+                      {categoryOptions.map((c) => (
+                        <SelectItem key={c.key} value={c.key}>
+                          {c.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="it-province">Provinsi</Label>
+                  <Select value={provinceId || undefined} onValueChange={setProvinceId}>
+                    <SelectTrigger id="it-province">
+                      <SelectValue placeholder="Pilih provinsi" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-64">
+                      {(provinces ?? []).map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="it-region">Suku / Komunitas</Label>
+                  <Input
+                    id="it-region"
+                    value={region}
+                    onChange={(e) => setRegion(e.target.value)}
+                    placeholder="Contoh: Minangkabau"
+                  />
+                </div>
+              </div>
 
             <div className="grid gap-1.5">
               <div className="flex items-center justify-between">
@@ -280,6 +455,12 @@ export function ItemFormDialog({
             </div>
 
             <div className="grid gap-1.5">
+              <Label htmlFor="it-slug">Slug</Label>
+              <Input id="it-slug" required maxLength={140} pattern="[a-z0-9]+(-[a-z0-9]+)*" value={slug} onChange={(e) => { setSlugEdited(true); setSlug(e.target.value.toLowerCase()) }} placeholder="contoh: rumah-gadang" />
+              <p className="text-xs text-muted-foreground">Dipakai sebagai identitas URL yang mudah dibaca.</p>
+            </div>
+
+            <div className="grid gap-1.5">
               <Label htmlFor="it-desc">Deskripsi lengkap</Label>
               <Textarea
                 id="it-desc"
@@ -288,6 +469,16 @@ export function ItemFormDialog({
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Jelaskan asal-usul, ciri khas, dan konteks budaya objek (minimal 20 karakter)."
               />
+            </div>
+
+            <div className="grid gap-1.5">
+              <Label htmlFor="it-history">Sejarah &amp; konteks</Label>
+              <Textarea id="it-history" rows={3} maxLength={5000} value={history} onChange={(e) => setHistory(e.target.value)} placeholder="Isi hanya dengan informasi yang memiliki rujukan. Bagian ini boleh dikosongkan bila belum terverifikasi." />
+            </div>
+
+            <div className="grid gap-1.5">
+              <Label htmlFor="it-function">Fungsi budaya</Label>
+              <Textarea id="it-function" rows={2} maxLength={3000} value={culturalFunction} onChange={(e) => setCulturalFunction(e.target.value)} placeholder="Fungsi atau penggunaan yang didukung sumber (opsional)." />
             </div>
 
             <div className="grid gap-1.5">
@@ -339,6 +530,12 @@ export function ItemFormDialog({
                     Perlu peninjauan sumber
                   </Label>
                   <Switch id="it-review" checked={needsReview} onCheckedChange={setNeedsReview} />
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <Label htmlFor="it-demo" className="text-xs font-medium">
+                    Konten demonstrasi
+                  </Label>
+                  <Switch id="it-demo" checked={isDemonstration} onCheckedChange={setIsDemonstration} />
                 </div>
               </div>
             </div>
@@ -433,6 +630,7 @@ export function ItemFormDialog({
               </Button>
             </div>
           </div>
+          )}
 
           <DialogFooter className="mt-4 shrink-0 gap-2 border-t pt-3 sm:justify-end">
             <Button type="button" variant="outline" onClick={onClose} disabled={pending}>

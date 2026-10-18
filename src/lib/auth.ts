@@ -4,6 +4,7 @@
  */
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { randomBytes } from 'node:crypto'
 import { db } from '@/lib/db'
 import type { SessionUser, UserRole } from '@/lib/types'
 
@@ -12,11 +13,12 @@ export const SESSION_COOKIE = 'wn_session'
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000 // 7 hari
 const SESSION_TTL_SEC = 7 * 24 * 60 * 60
 
-/** Buat baris Session baru (token cuid via default Prisma) untuk seorang user. */
+/** Buat sesi baru dengan token acak kriptografis. */
 export async function createSession(userId: string): Promise<{ token: string; expiresAt: Date }> {
   const expiresAt = new Date(Date.now() + SESSION_TTL_MS)
+  const token = randomBytes(32).toString('hex')
   const session = await db.session.create({
-    data: { userId, expiresAt },
+    data: { userId, expiresAt, token },
     select: { token: true, expiresAt: true },
   })
   return { token: session.token, expiresAt: session.expiresAt }
@@ -75,13 +77,13 @@ export async function requireRole(
   return { user }
 }
 
-/** Tempel cookie sesi ke respons (httpOnly, lax, 7 hari; secure: false untuk sandbox http). */
+/** Tempel cookie sesi ke respons (httpOnly, lax, 7 hari; secure pada produksi). */
 export function setSessionCookie(res: NextResponse, token: string, expiresAt: Date): void {
   res.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: 'lax',
     path: '/',
-    secure: false,
+    secure: process.env.NODE_ENV === 'production',
     expires: expiresAt,
     maxAge: SESSION_TTL_SEC,
   })
@@ -93,7 +95,7 @@ export function clearSessionCookie(res: NextResponse): void {
     httpOnly: true,
     sameSite: 'lax',
     path: '/',
-    secure: false,
+    secure: process.env.NODE_ENV === 'production',
     maxAge: 0,
   })
 }

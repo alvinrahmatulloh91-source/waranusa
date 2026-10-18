@@ -11,6 +11,10 @@ export function Hero() {
   const { data: stats } = useStats()
   const setView = useWaranusa((s) => s.setView)
 
+  const scrollToExplorer = () => {
+    document.getElementById('jelajah')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   return (
     <section className="wn-batik relative overflow-hidden border-b border-border/60 bg-gradient-to-b from-accent/60 via-background to-background">
       <div className="mx-auto grid max-w-7xl items-center gap-8 px-4 py-12 sm:px-6 md:py-16 lg:grid-cols-2 lg:gap-12">
@@ -33,7 +37,7 @@ export function Hero() {
             mainkan instrumen virtual langsung dari peramban, dan baca arsip yang bersumbernya jelas.
           </p>
           <div className="flex flex-wrap gap-3">
-            <Button size="lg" className="gap-2 bg-primary text-primary-foreground shadow-md hover:bg-primary/90" onClick={() => setView('jelajah')}>
+            <Button size="lg" className="gap-2 bg-primary text-primary-foreground shadow-md hover:bg-primary/90" onClick={scrollToExplorer}>
               <Map className="h-4.5 w-4.5" /> Jelajahi Nusantara
             </Button>
             <Button size="lg" variant="outline" className="gap-2 border-primary/40 text-primary hover:bg-accent" onClick={() => setView('instrumen')}>

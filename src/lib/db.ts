@@ -6,7 +6,7 @@ import { PrismaClient } from '@prisma/client'
  * instance LAMA (skema lama) tetap terpakai setelah `prisma db push`/`generate`.
  * Bump SCHEMA_VERSION setiap mengubah prisma/schema.prisma.
  */
-const SCHEMA_VERSION = 'waranusa-schema-2025-10-17-v2'
+const SCHEMA_VERSION = 'waranusa-schema-2026-10-17-v6'
 
 const globalForPrisma = globalThis as unknown as {
   __waranusaPrisma?: PrismaClient

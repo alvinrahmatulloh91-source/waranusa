@@ -71,7 +71,7 @@ export function SiteHeader() {
           <span className="flex shrink-0 flex-col items-start leading-none">
             <span className="font-display text-lg font-bold tracking-tight text-foreground sm:text-xl">WaraNusa</span>
             <span className="hidden text-[9.5px] font-semibold uppercase tracking-[0.14em] text-muted-foreground sm:block">
-              Eksplorasi &amp; Pelestarian Budaya
+              Platform Eksplorasi &amp; Pelestarian Budaya Indonesia
             </span>
           </span>
         </button>

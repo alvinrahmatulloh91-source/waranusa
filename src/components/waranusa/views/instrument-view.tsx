@@ -5,7 +5,7 @@
  * - Daftar instrumen bisa dimainkan (kiri) + viewer 3D & pad nada (kanan)
  * - Kontrol volume Web Audio, panduan interaksi, ringkasan budaya
  */
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -217,6 +217,9 @@ export function InstrumentView() {
               />
             </div>
 
+            {/* Simulasi busur virtual / gesekan rebab */}
+            <VirtualBowSection />
+
             {/* Cara berinteraksi */}
             <div className="rounded-2xl border bg-card p-4 shadow-sm sm:p-5">
               <h3 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-muted-foreground">
@@ -271,5 +274,104 @@ export function InstrumentView() {
         )}
       </div>
     </motion.section>
+  )
+}
+
+function VirtualBowSection() {
+  const [bowFreq, setBowFreq] = useState(262)
+  const [strokeIntensity, setStrokeIntensity] = useState(1.0)
+  const [isBowing, setIsBowing] = useState(false)
+  const lastXRef = useRef<number | null>(null)
+  const lastTimeRef = useRef<number>(Date.now())
+
+  const BOW_NOTES = [
+    { label: 'Dawai 1 (Nem)', freq: 220, note: '6' },
+    { label: 'Dawai 2 (Barang)', freq: 262, note: '1' },
+    { label: 'Dawai 3 (Gulu)', freq: 294, note: '2' },
+    { label: 'Dawai 4 (Pelog)', freq: 330, note: '3' },
+  ]
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    setIsBowing(true)
+    lastXRef.current = e.clientX
+    lastTimeRef.current = Date.now()
+    instrumentAudio.bow(bowFreq, 0.9)
+  }
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isBowing || lastXRef.current === null) return
+    const now = Date.now()
+    const dt = Math.max(16, now - lastTimeRef.current)
+    const dx = Math.abs(e.clientX - lastXRef.current)
+    const speed = (dx / dt) * 100 // kecepatan gerakan piksel
+    const intensity = Math.min(2.0, Math.max(0.4, speed / 15))
+    setStrokeIntensity(intensity)
+    if (dx > 4) {
+      instrumentAudio.bow(bowFreq, intensity)
+      lastXRef.current = e.clientX
+      lastTimeRef.current = now
+    }
+  }
+
+  const handlePointerUp = () => {
+    setIsBowing(false)
+    lastXRef.current = null
+  }
+
+  return (
+    <div className="rounded-2xl border border-primary/30 bg-card p-4 shadow-sm sm:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h3 className="flex items-center gap-2 font-display text-base font-bold text-foreground">
+            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary/10 text-primary text-xs">
+              🎻
+            </span>
+            Simulasi Gerakan Busur Virtual (Rebab / Dawai Gesek)
+          </h3>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Tarik atau seret busur ke kiri & kanan. Kecepatan tarikan memengaruhi dinamika dan resonansi dawai.
+          </p>
+        </div>
+        <Badge variant="outline" className="border-brand-teal/40 text-[11px] text-brand-teal">
+          Dinamika Gesekan: {(strokeIntensity * 100).toFixed(0)}%
+        </Badge>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        {BOW_NOTES.map((n) => (
+          <Button
+            key={n.freq}
+            size="sm"
+            variant={bowFreq === n.freq ? 'default' : 'outline'}
+            className="h-7 text-xs"
+            onClick={() => {
+              setBowFreq(n.freq)
+              instrumentAudio.bow(n.freq, strokeIntensity)
+            }}
+          >
+            {n.label}
+          </Button>
+        ))}
+      </div>
+
+      <div
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerUp}
+        className="mt-3.5 relative flex h-16 w-full cursor-ew-resize select-none items-center justify-center rounded-xl border border-dashed border-primary/40 bg-gradient-to-r from-muted via-accent/30 to-muted touch-none"
+      >
+        <span className="text-xs font-semibold text-primary">
+          {isBowing ? '⚡ Menggesek Dawai Rebab…' : '↔ Geser kursor atau sentuh di sini untuk menggesek busur'}
+        </span>
+        <div
+          className="absolute inset-y-1 w-2.5 rounded-full bg-brand-gold shadow transition-all pointer-events-none"
+          style={{
+            left: `${Math.min(95, Math.max(5, strokeIntensity * 45))}%`,
+            opacity: isBowing ? 1 : 0.5,
+          }}
+        />
+      </div>
+    </div>
   )
 }

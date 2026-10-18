@@ -41,6 +41,7 @@ async function main() {
   await db.moderationReview.deleteMany()
   await db.contribution.deleteMany()
   await db.session.deleteMany()
+  await db.mediaAsset.deleteMany()
   await db.culturalSource.deleteMany()
   await db.culturalItem.deleteMany()
   await db.category.deleteMany()
@@ -107,12 +108,39 @@ async function main() {
           melody: it.melody ? JSON.stringify(it.melody) : null,
           status: 'PUBLISHED',
           needsReview: it.sources.length < 2,
+          isDemonstration: true,
           sources: {
             create: it.sources.map((s) => ({
               title: s.title,
               url: s.url ?? null,
               license: licenseFor(s.url),
             })),
+          },
+          mediaAssets: {
+            create: [
+              {
+                title: `Ilustrasi Visual ${it.name}`,
+                type: 'IMAGE',
+                url: CATEGORY_IMAGE[it.category] ?? '/images/arsip-banner.png',
+                license: 'CC BY-SA 4.0 — WaraNusa Heritage Archive',
+                creator: 'Tim Dokumentasi WaraNusa',
+                caption: `Ilustrasi digital visualisasi ${it.name}`,
+                isFeatured: true,
+              },
+              ...(it.model3d
+                ? [
+                    {
+                      title: `Model 3D Interaktif ${it.name}`,
+                      type: 'MODEL_3D',
+                      url: it.model3d,
+                      license: 'Arketipe Prosedural Tiga Dimensi WaraNusa',
+                      creator: 'WaraNusa 3D Lab',
+                      caption: `Arketipe 3D prosedural ${it.name}`,
+                      isFeatured: false,
+                    },
+                  ]
+                : []),
+            ],
           },
         },
       })

@@ -35,6 +35,9 @@ export function ItemCard({ item, showProvince = false }: { item: CulturalItemFul
           <Badge className="bg-black/45 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
             {cat?.label ?? item.category}
           </Badge>
+          {item.isDemonstration && (
+            <Badge className="bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-950">Contoh</Badge>
+          )}
         </div>
         <div className="absolute right-2 top-2 flex gap-1">
           {item.model3d && (

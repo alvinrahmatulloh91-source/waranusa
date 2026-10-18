@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireRole } from '@/lib/auth'
 import type { UserRole } from '@/lib/types'
+import { isSafeContentUrl } from '@/lib/admin-item'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,7 +25,13 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
     const data: Record<string, unknown> = {}
     if (typeof body.title === 'string' && body.title.trim()) data.title = body.title.trim()
-    if (body.url !== undefined) data.url = typeof body.url === 'string' ? body.url.trim() || null : null
+    if (body.url !== undefined) {
+      const url = typeof body.url === 'string' ? body.url.trim() : ''
+      if (url && !isSafeContentUrl(url, true)) {
+        return NextResponse.json({ error: 'URL sumber harus menggunakan HTTP atau HTTPS.' }, { status: 400 })
+      }
+      data.url = url || null
+    }
     if (body.publisher !== undefined) data.publisher = typeof body.publisher === 'string' ? body.publisher.trim() || null : null
     if (body.year !== undefined) data.year = typeof body.year === 'string' ? body.year.trim() || null : null
     if (body.license !== undefined) data.license = typeof body.license === 'string' ? body.license.trim() || null : null

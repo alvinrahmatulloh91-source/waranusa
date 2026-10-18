@@ -74,12 +74,15 @@ export function mapMediaAsset(m: MediaAssetRowLike) {
 
 interface ItemRowLike {
   id: string
+  slug?: string | null
   provinceId: string
   category: string
   name: string
   region: string | null
   shortDesc: string
   description: string
+  history?: string | null
+  culturalFunction?: string | null
   philosophy: string
   imageUrl: string | null
   model3d: string | null
@@ -89,6 +92,7 @@ interface ItemRowLike {
   melody: string | null
   status: string
   needsReview: boolean
+  isDemonstration?: boolean
   createdAt: Date
   updatedAt: Date
   sources: SourceRowLike[]
@@ -100,12 +104,15 @@ interface ItemRowLike {
 export function mapItem(item: ItemRowLike): CulturalItemFull {
   return {
     id: item.id,
+    slug: item.slug ?? null,
     provinceId: item.provinceId,
     category: item.category,
     name: item.name,
     region: item.region,
     shortDesc: item.shortDesc,
     description: item.description,
+    history: item.history ?? null,
+    culturalFunction: item.culturalFunction ?? null,
     philosophy: item.philosophy,
     imageUrl: item.imageUrl,
     model3d: item.model3d,
@@ -125,6 +132,7 @@ export function mapItem(item: ItemRowLike): CulturalItemFull {
     mediaAssets: item.mediaAssets ? item.mediaAssets.map(mapMediaAsset) : undefined,
     status: item.status as ItemStatus,
     needsReview: item.needsReview,
+    isDemonstration: item.isDemonstration ?? false,
     createdAt: item.createdAt.toISOString(),
     updatedAt: item.updatedAt.toISOString(),
     province: item.province ?? undefined,

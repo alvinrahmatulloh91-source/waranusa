@@ -71,6 +71,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error ?? 'Data item tidak valid.' }, { status: 400 })
     }
 
+    if (fields.status === 'PUBLISHED') {
+      const hasTraceableSource = (fields.sources ?? []).some((source) => source.url || source.publisher)
+      if (!hasTraceableSource || fields.needsReview) {
+        return NextResponse.json(
+          { error: 'Konten hanya dapat dipublikasikan setelah memiliki sumber yang dapat diperiksa dan tinjauan sumber ditandai selesai.' },
+          { status: 400 },
+        )
+      }
+    }
+
+    if (await db.culturalItem.findUnique({ where: { slug: fields.slug ?? '' }, select: { id: true } })) {
+      return NextResponse.json({ error: 'Slug sudah digunakan oleh objek budaya lain.' }, { status: 409 })
+    }
+
     const categoryRow = await db.category.findUnique({
       where: { key: fields.category ?? '' },
       select: { id: true },
@@ -89,11 +103,14 @@ export async function POST(req: NextRequest) {
     const created = await db.culturalItem.create({
       data: {
         provinceId: fields.provinceId ?? '',
+        slug: fields.slug,
         category: fields.category ?? '',
         name: fields.name ?? '',
         region: fields.region ?? null,
         shortDesc: fields.shortDesc ?? '',
         description: fields.description ?? '',
+        history: fields.history ?? null,
+        culturalFunction: fields.culturalFunction ?? null,
         philosophy: fields.philosophy ?? '',
         imageUrl: fields.imageUrl ?? null,
         model3d: fields.model3d ?? null,
@@ -103,6 +120,7 @@ export async function POST(req: NextRequest) {
         melody: fields.melody ?? null,
         status: fields.status ?? 'DRAFT',
         needsReview: fields.needsReview ?? false,
+        isDemonstration: fields.isDemonstration ?? false,
       },
       select: { id: true },
     })

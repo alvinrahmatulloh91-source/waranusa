@@ -1,164 +1,76 @@
-# WaraNusa — Platform Eksplorasi & Pelestarian Budaya Indonesia
+# WaraNusa
 
-> *Digital Cultural Heritage Explorer* — menjelajahi kebudayaan Indonesia melalui peta interaktif,
-> katalog budaya per wilayah, visualisasi 3D, instrumen musik virtual, dan arsip budaya yang
-> disertai sumber serta atribusi. Dibangun untuk kebutuhan demonstrasi kompetisi (UINIC 8.0).
+WaraNusa adalah platform eksplorasi dan dokumentasi budaya Indonesia dengan katalog, pemilih wilayah ilustratif, viewer 3D prosedural, instrumen virtual berbasis sintesis audio, arsip sumber, serta CMS untuk pengelolaan konten dan moderasi kontribusi.
 
-![WaraNusa](public/images/brand/waranusa-banner.png)
+## Stack
 
----
+- Next.js App Router, React, TypeScript, Tailwind CSS, dan Zustand untuk navigasi tampilan publik.
+- Prisma ORM dengan SQLite untuk data demonstrasi.
+- Three.js / React Three Fiber untuk model prosedural dan Web Audio API untuk suara demonstrasi.
+- Autentikasi sesi cookie `httpOnly`; API admin memeriksa sesi dan peran di server.
 
-## 1. Ringkasan Fitur
+## Menjalankan secara lokal
 
-| Area | Fitur |
-| --- | --- |
-| **Landing & Navigasi** | Hero "Kenali Akar, Jelajahi Budaya.", statistik langsung dari database, sorotan budaya, CTA 3D/instrumen/kontribusi, navbar + akun, footer sticky dengan keterangan transparansi aset. |
-| **Peta Interaktif** | Peta SVG stilasi 7 gugus pulau + 18 penanda provinsi (klik gugus → filter; klik provinsi → view provinsi berisi kategori budaya, sejarah, tradisi, kontribusi komunitas). Peta **ilustratif**, bukan batas administratif resmi. |
-| **Katalog Budaya** | 90+ objek terpublikasi dengan pencarian (debounce), filter kategori/provinsi/gugus pulau, paginasi klien, kartu dengan badge 3D/Audio. |
-| **Detail Budaya** | Tab **Model 3D Interaktif** (orbit 360°, zoom, reset, penanda bagian klik-able berisi fungsi & filosofi) / ilustrasi; bagian Tentang, Filosofi & Makna, Bagian & Makna, **Sumber & Atribusi** (judul, penerbit, tahun, lisensi), Objek Terkait, atribusi ilustrasi AI. |
-| **Instrumen Virtual** | 18 alat musik tradisional playable: model 3D prosedural, pad nada + melodi demo, kontrol volume, petunjuk interaksi. Suara = **sintesis demonstrasi Web Audio API**, bukan rekaman autentik. |
-| **Arsip Budaya** | Pencarian + filter dengan penekanan pada metadata (kategori, wilayah, badge audio). |
-| **Kontribusi & Moderasi** | Wajib login. Alur: `SUBMITTED → UNDER_REVIEW → APPROVED / REJECTED / NEEDS_REVISION`. Kurasi otomatis AI hanya menghasilkan *catatan* (`aiNote`), **tidak** menentukan status. Riwayat kontribusi pribadi menampilkan status, catatan kurator, dan jejak tinjauan. |
-| **Admin CMS** | Dashboard statistik; CRUD Objek Budaya (termasuk editor sumber, status publikasi `DRAFT/PENDING_REVIEW/PUBLISHED/REJECTED/ARCHIVED`, flag *perlu tinjauan*); CRUD Wilayah & Kategori; moderasi kontribusi dengan catatan + audit trail (`ModerationReview`); manajemen pengguna & peran (khusus Administrator). |
-| **Keamanan** | Autentikasi sesi cookie httpOnly (scrypt), otorisasi peran **divalidasi di server** pada setiap endpoint admin, whitelist field (anti mass-assignment), rate limiting (login & kontribusi), validasi input server, error tanpa stack trace. |
+Prasyarat: Bun atau Node.js/npm dan SQLite yang didukung Prisma.
 
-## 2. Teknologi
-
-- **Framework**: Next.js 16 (App Router, satu route `/` — navigasi SPA via Zustand), TypeScript 5
-- **UI**: Tailwind CSS 4, shadcn/ui (New York), lucide-react, framer-motion, TanStack Query
-- **3D**: three.js + @react-three/fiber + drei (model **prosedural**, tanpa aset eksternal)
-- **Audio**: Web Audio API (mesin sintesis di `src/lib/instrument-audio.ts`)
-- **Database**: Prisma ORM + SQLite (`db/custom.db`)
-- **AI**: `z-ai-web-dev-sdk` (backend) untuk catatan kurasi otomatis kontribusi
-
-## 3. Menjalankan Aplikasi
-
-```bash
-# 1. Install dependensi
+```sh
 bun install
-
-# 2. Konfigurasi environment (sudah tersedia di .env)
-#    DATABASE_URL=file:/home/z/my-project/db/custom.db
-
-# 3. Siapkan skema + seed data demonstrasi
-bun run db:push      # push skema Prisma ke SQLite
-bun prisma/seed.ts   # 5 kategori, 4 akun demo, 18 provinsi, 90 objek, sumber, kontribusi contoh
-
-# 4. Jalankan dev server (port 3000)
+cp .env.example .env
+bun run db:generate
+bun run db:deploy
+bun run seed
 bun run dev
+```
 
-# 5. Lint
+Jika memakai npm, gunakan `npm install` dan ganti awalan `bun run` dengan `npm run`.
+
+Buka `http://localhost:3000`. Seed mengisi akun dan konten demonstrasi. **Seed menghapus semua data aplikasi sebelum mengisi ulang; jalankan hanya pada database lokal kosong/demonstrasi, bukan database berisi data yang ingin dipertahankan.**
+
+Untuk pemeriksaan kode:
+
+```sh
 bun run lint
+bunx tsc --noEmit
+bun run build
 ```
 
-> Aplikasi hanya memiliki **satu route `/`**; semua "halaman" (peta, katalog, detail, instrumen,
-> arsip, kontribusi, riwayat, masuk, admin) adalah view SPA yang dikelola store Zustand.
+## Environment
 
-## 4. Environment Variables
+Salin `.env.example` menjadi `.env` dan sesuaikan `DATABASE_URL`. Jangan commit file `.env` atau kredensial. Contoh lokal memakai `file:./db/custom.db`.
 
-| Variabel | Nilai | Keterangan |
-| --- | --- | --- |
-| `DATABASE_URL` | `file:/home/z/my-project/db/custom.db` | Lokasi file SQLite (jangan menaruh kredensial di kode) |
+## Halaman dan fitur
 
-Tidak ada API key yang diperlukan untuk menjalankan fitur inti. SDK `z-ai-web-dev-sdk`
-membaca kredensialnya dari lingkungan runtime sandbox (backend only — tidak pernah dipakai di client).
+- Publik: `/` menampilkan eksplorasi, katalog, detail, instrumen, arsip, kontribusi, dan riwayat melalui navigasi aplikasi.
+- CMS: `/admin/dashboard`, `/admin/cultural-items`, `/admin/regions`, `/admin/categories`, `/admin/media`, `/admin/sources`, `/admin/contributions`, dan `/admin/users`.
+- Editor budaya mendukung draft, pratinjau, slug, sejarah, fungsi budaya, makna, sumber, wilayah, kategori, label demonstrasi, penanda verifikasi, serta status publikasi. Perubahan status publikasi dilindungi API. Konten tanpa sumber yang dapat diperiksa atau yang masih bertanda perlu tinjauan tidak dapat diterbitkan melalui editor admin.
+- Kontribusi pengguna memulai status `SUBMITTED`; keputusan moderasi dicatat di `ModerationReview`. Publik hanya menerima objek berstatus `PUBLISHED`.
+- Peran: `SUPER_ADMIN`, `EDITOR`, `REVIEWER`, dan `CONTRIBUTOR`. Pengunjung anonim dapat membaca konten publik. Pengelolaan peran hanya untuk `SUPER_ADMIN`.
 
-## 5. Skema Database (Prisma)
+## Database dan API
 
-```
-User ── Session (sesi login)
-User ── Contribution ── ModerationReview (audit keputusan; reviewer → User)
-Province (wilayah) ── CulturalItem ─┬─ CulturalSource (sumber & atribusi)
-Category (metadata kategori)        └─ (parts/sounds/melody: JSON untuk model 3D prosedural)
-```
+Skema Prisma berada di `prisma/schema.prisma`, dengan baseline migration di `prisma/migrations/`. Untuk database baru gunakan `db:deploy`; untuk pengembangan skema lokal gunakan `db:migrate` atau `db:push`. Database lokal yang sebelumnya dibuat dengan `db:push` tidak memiliki riwayat migrasi. Jangan jalankan migrasi baseline langsung terhadap database tersebut; terus gunakan `db:push` atau lakukan proses baseline yang terencana sebelum migrasi. Seed demonstrasi berada di `prisma/seed.ts` dan menghapus isi tabel sebelum mengisi data contoh, jadi jangan jalankan pada database berisi data yang ingin dipertahankan. Entitas inti meliputi `User`, `Session`, `Province`, `Category`, `CulturalItem`, `CulturalSource`, `MediaAsset`, `Contribution`, dan `ModerationReview`. Item budaya memiliki foreign key ke kategori dan wilayah. Item contoh seed ditandai di kartu serta halaman detail.
 
-- `CulturalItem.status`: `DRAFT | PENDING_REVIEW | PUBLISHED | REJECTED | ARCHIVED` — API publik **hanya** menyajikan `PUBLISHED`.
-- `CulturalItem.needsReview`: ditandai otomatis saat seed (sumber < 2) dan pada objek hasil kontribusi.
-- Keputusan desain: kolom `parts/sounds/melody` dipertahankan sebagai JSON (parameter model 3D
-  prosedural, bukan konten editorial); `category` pada item berupa key + tabel `Category` untuk
-  metadata yang dapat dikelola admin (menghindari duplikasi data pada 90 item seed).
+Endpoint utama:
 
-## 6. Endpoint API Utama
+- Publik: `GET /api/provinces`, `GET /api/categories`, `GET /api/items`, `GET /api/items/{id}`, `GET /api/stats`.
+- Akun: `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`.
+- Kontribusi: `POST /api/contributions`, `GET /api/my/contributions`.
+- Admin: `/api/admin/items`, `/api/admin/provinces`, `/api/admin/categories`, `/api/admin/media`, `/api/admin/sources`, `/api/admin/contributions`, `/api/admin/users`, dan `/api/admin/stats`.
 
-**Publik**
-- `GET /api/provinces` · `GET /api/provinces/[slug]` — wilayah + item terpublikasi + kontribusi disetujui
-- `GET /api/categories` — metadata kategori + jumlah item
-- `GET /api/items?q=&category=&province=&island=&playable=1&limit=` — katalog (PUBLISHED saja)
-- `GET /api/items/[id]` — detail (404 bila bukan PUBLISHED)
-- `GET /api/stats` — statistik beranda
+API admin menggunakan role guard di server. Batas akses berbeda menurut aksi: editor mengelola konten, reviewer memproses moderasi, dan super admin mengelola peran pengguna.
 
-**Autentikasi**
-- `POST /api/auth/register` · `POST /api/auth/login` (rate limit 5/menit) · `POST /api/auth/logout`
-- `GET /api/auth/me` — `{ user | null }`
+## Akun demonstrasi
 
-**Kontribusi (wajib login)**
-- `POST /api/contributions` — status awal selalu `SUBMITTED` + `aiNote` (rate limit 10/menit)
-- `GET /api/my/contributions` — riwayat milik sendiri
+Seed menyediakan akun demonstrasi untuk administrator, editor, reviewer, dan kontributor. Kredensial lokal demonstrasi didefinisikan di `prisma/seed.ts`; ganti sebelum deployment dan jangan gunakan kredensial demonstrasi di lingkungan publik.
 
-**Admin (otorisasi server: EDITOR+ / REVIEWER+ / SUPER_ADMIN)**
-- `GET /api/admin/stats`
-- `GET|POST /api/admin/items` · `PATCH /api/admin/items/[id]`
-- `GET|POST /api/admin/provinces` · `PATCH /api/admin/provinces/[id]`
-- `GET|POST /api/admin/categories` · `PATCH /api/admin/categories/[id]`
-- `GET /api/admin/contributions?status=` · `PATCH /api/admin/contributions/[id]/status`
-  (`{status, note?, publish?}` — APPROVED+publish membuat objek budaya terpublikasi + baris audit)
-- `GET /api/admin/users` · `PATCH /api/admin/users/[id]/role` (SUPER_ADMIN; guard Administrator terakhir)
+## Aset, atribusi, dan batasan
 
-Format respons konsisten: `{items|provinces|categories|stats|user|contributions|item|ok}` / error `{error}`.
+- Peta adalah ilustrasi SVG pemilih gugus/provinsi, bukan batas administratif presisi.
+- Viewer memakai model prosedural yang ada di kode; belum ada berkas model 3D eksternal.
+- Instrumen menghasilkan suara sintetis Web Audio API, bukan rekaman autentik instrumen.
+- Media CMS saat ini dicatat melalui URL dan metadata pencipta/lisensi/sumber; upload berkas, pemindaian file, dan penyimpanan objek belum tersedia.
+- Konten seed adalah data demonstrasi dan cakupan provinsi/objeknya tidak mewakili seluruh budaya Indonesia. Periksa sumber dan izin media sebelum penggunaan publik.
 
-## 7. Akun Demonstrasi
+## Catatan rilis
 
-| Akun | Peran | Keterangan |
-| --- | --- | --- |
-| `admin@waranusa.id` | Administrator | Akses penuh CMS, moderasi, pengguna |
-| `editor@waranusa.id` | Editor | CRUD konten & wilayah/kategori |
-| `kurator@waranusa.id` | Kurator | Moderasi kontribusi |
-| `warga@waranusa.id` | Kontributor | Kirim & pantau kontribusi |
-
-Kata sandi semua akun demo: **`waranusa123`** (khusus demonstrasi — ganti pada deployment nyata).
-
-## 8. Pengujian yang Telah Dijalankan
-
-- **Unit-level API (curl, oleh agent backend)**: seluruh endpoint publik/auth/admin — termasuk
-  skenario 401/403/404/409/429, rate limit login, guard Administrator terakhir, validasi status,
-  alur approve→publish hingga objek muncul di API publik.
-- **E2E browser (agent-browser, desktop 1366px & mobile 390px)**: beranda + statistik, peta →
-  provinsi → detail, viewer 3D (orbit, klik bagian → fungsi/filosofi), katalog + pencarian
-  "gamelan" (3 hasil) + paginasi, instrumen virtual (ganti instrumen, pad nada, volume, catatan
-  sintesis), masuk/daftar + akun demo, kontribusi end-to-end (SUBMITTED → ditinjau → disetujui →
-  objek tayang di katalog), riwayat kontribusi, panel admin (dashboard, objek 91 item + badge
-  "perlu tinjauan", moderasi dengan catatan, pengguna/peran), footer sticky, konsol tanpa error.
-- `bun run lint`: 0 error. `bunx tsc --noEmit`: 0 error pada kode aplikasi (`src/`).
-
-## 9. Aset Eksternal & Lisensi
-
-- **Logo & banner brand**: aset resmi WaraNusa (diberikan pemilik proyek) — emblem dipotong dari
-  banner via sharp (`scripts/logo-process.mjs`).
-- **Ilustrasi katalog/hero**: hasil generasi AI (dibuat untuk proyek ini) — diberi atribusi
-  "Ilustrasi digital hasil generasi AI (WaraNusa) … bukan foto artefak asli" pada setiap tampilan.
-- **Model 3D**: prosedural (dibangun dari primitive three.js) — tidak memakai aset pihak ketiga.
-- **Suara instrumen**: sintesis Web Audio API — diberi label "bukan rekaman autentik".
-- **Sumber konten budaya**: tautan referensi publik (Wikipedia — konten CC BY-SA; direktori
-  Warisan Budaya Takbenda Kemendikbudristek). Lisensi ditampilkan pada setiap sumber di detail.
-- **Peta**: ilustrasi SVG internal, bukan data GeoJSON administratif.
-
-## 10. Batasan & Keputusan MVP (jujur)
-
-1. Peta = ilustrasi stilasi; arsitektur siap diganti GeoJSON/Leaflet tanpa membangun ulang halaman.
-2. Upload berkas (gambar/audio/model) **belum diimplementasikan** — media dikelola lewat URL +
-   metadata lisensi di admin. Menyimpan berkas besar sebagai string di DB sengaja dihindari.
-3. Kontribusi tanpa provinsi disetujui **tanpa** auto-publish (harus diatur provinsinya dulu) —
-   pesan ini ditampilkan ke kurator.
-4. Kontribusi yang diminta revisi belum mendukung edit-resubmit dalam satu record; pengguna
-   mengirim ulang lewat formulir (terdokumentasi di UI).
-5. Dark mode token tersedia tetapi UI dioptimalkan untuk tema terang (identitas gading/teal).
-6. 18 provinsi seed = demonstrasi cakupan, **bukan** klaim seluruh budaya Indonesia tercakup.
-
-## 11. Langkah Lanjutan (menuju online)
-
-1. Isi `DATABASE_URL` produksi (mis. Postgres via Prisma; skema kompatibel setelah provider diubah).
-2. Ganti akun demo dengan akun nyata + rotasi kredensial; aktifkan `secure` pada cookie sesi.
-3. Pasang di belakang HTTPS (mis. Vercel/VPS + Caddy); sesuaikan CORS bila frontend terpisah.
-4. Ganti peta ilustrasi dengan GeoJSON provinsi resmi (mis. GADM/OpenStreetMap, cek lisensi).
-5. Unggah aset GLB asli + rekaman audio berizin, lalu pasang pada `ThreeViewer` (kolom `model3d`
-   saat ini menerima kunci model prosedural; viewer siap diarahkan ke URL model).
+Gunakan HTTPS dan aktifkan cookie `secure` pada deployment HTTPS. Atur `DATABASE_URL` untuk penyimpanan persisten yang sesuai, siapkan backup database, ganti akun demonstrasi, lalu tinjau lisensi sumber/media dan kebijakan moderasi sebelum membuka kontribusi publik. Untuk produksi berskala besar, evaluasi migrasi SQLite ke PostgreSQL melalui konfigurasi datasource Prisma.

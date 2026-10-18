@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { requireRole } from '@/lib/auth'
 import { mapMediaAsset } from '@/lib/serialize'
+import { isSafeContentUrl } from '@/lib/admin-item'
 import type { Prisma } from '@prisma/client'
 import type { UserRole } from '@/lib/types'
 
@@ -100,6 +101,12 @@ export async function POST(req: NextRequest) {
     }
     if (!url || url.length < 3) {
       return NextResponse.json({ error: 'URL berkas/media wajib diisi.' }, { status: 400 })
+    }
+    if (!isSafeContentUrl(url)) {
+      return NextResponse.json({ error: 'URL media harus berupa path lokal atau URL HTTPS.' }, { status: 400 })
+    }
+    if (sourceUrl && !isSafeContentUrl(sourceUrl, true)) {
+      return NextResponse.json({ error: 'URL sumber media harus menggunakan HTTP atau HTTPS.' }, { status: 400 })
     }
 
     if (itemId) {

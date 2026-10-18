@@ -17,7 +17,10 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     if ('error' in auth) return auth.error
     const { id } = await ctx.params
 
-    const existing = await db.culturalItem.findUnique({ where: { id }, select: { id: true } })
+    const existing = await db.culturalItem.findUnique({
+      where: { id },
+      select: { id: true, needsReview: true, sources: { select: { url: true, publisher: true } } },
+    })
     if (!existing) {
       return NextResponse.json({ error: 'Item tidak ditemukan.' }, { status: 404 })
     }
@@ -28,6 +31,27 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     const { error, fields } = parseItemBody(body, true)
     if (error || !fields) {
       return NextResponse.json({ error: error ?? 'Data item tidak valid.' }, { status: 400 })
+    }
+
+    if (fields.status === 'PUBLISHED') {
+      const sourceRows = fields.sources ?? existing.sources
+      const hasTraceableSource = sourceRows.some((source) => source.url || source.publisher)
+      const reviewPending = fields.needsReview ?? existing.needsReview
+      if (!hasTraceableSource || reviewPending) {
+        return NextResponse.json(
+          { error: 'Konten hanya dapat dipublikasikan setelah memiliki sumber yang dapat diperiksa dan tinjauan sumber ditandai selesai.' },
+          { status: 400 },
+        )
+      }
+    }
+
+    if (fields.slug) {
+      const slugOwner = await db.culturalItem.findFirst({
+        where: { slug: fields.slug, id: { not: id } }, select: { id: true },
+      })
+      if (slugOwner) {
+        return NextResponse.json({ error: 'Slug sudah digunakan oleh objek budaya lain.' }, { status: 409 })
+      }
     }
 
     if (fields.category !== undefined) {
@@ -52,9 +76,12 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     // Whitelist: hanya field yang memang dikirim yang diperbarui.
     const data: Prisma.CulturalItemUncheckedUpdateInput = {}
     if (fields.name !== undefined) data.name = fields.name
+    if (fields.slug !== undefined) data.slug = fields.slug
     if (fields.region !== undefined) data.region = fields.region
     if (fields.shortDesc !== undefined) data.shortDesc = fields.shortDesc
     if (fields.description !== undefined) data.description = fields.description
+    if (fields.history !== undefined) data.history = fields.history
+    if (fields.culturalFunction !== undefined) data.culturalFunction = fields.culturalFunction
     if (fields.philosophy !== undefined) data.philosophy = fields.philosophy
     if (fields.imageUrl !== undefined) data.imageUrl = fields.imageUrl
     if (fields.model3d !== undefined) data.model3d = fields.model3d
@@ -64,6 +91,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     if (fields.melody !== undefined) data.melody = fields.melody
     if (fields.status !== undefined) data.status = fields.status
     if (fields.needsReview !== undefined) data.needsReview = fields.needsReview
+    if (fields.isDemonstration !== undefined) data.isDemonstration = fields.isDemonstration
     if (fields.category !== undefined) data.category = fields.category
     if (fields.provinceId !== undefined) data.provinceId = fields.provinceId
 
