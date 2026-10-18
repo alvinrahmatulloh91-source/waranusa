@@ -1,276 +1,271 @@
-import type { SoundParam } from '@/lib/instrument-audio'
+/**
+ * WaraNusa — Kontrak Tipe API (sumber kebenaran frontend & backend)
+ * Semua endpoint mengembalikan bentuk ApiOk<T> / ApiErr yang konsisten.
+ */
+import type {
+  ContributionStatus,
+  ItemStatus,
+  MediaType,
+  Role,
+  SourceType,
+} from "./constants";
 
-/* Re-export agar modul lain (mis. lib/serialize.ts) bisa mengimpor dari sini. */
-export type { SoundParam }
-
-/* ============================================================
- * WaraNusa — tipe data kontrak API & domain (sumber kebenaran
- * bersama untuk frontend dan backend).
- * ============================================================ */
-
-/* ---------- Enum status ---------- */
-
-/** Status publikasi objek budaya (alur CMS). */
-export type ItemStatus = 'DRAFT' | 'PENDING_REVIEW' | 'PUBLISHED' | 'REJECTED' | 'ARCHIVED'
-
-/** Status moderasi kontribusi: diajukan → menunggu → selesai. */
-export type ContributionStatus =
-  | 'SUBMITTED'
-  | 'UNDER_REVIEW'
-  | 'APPROVED'
-  | 'REJECTED'
-  | 'NEEDS_REVISION'
-
-/** Peran pengguna (otorisasi divalidasi di server). */
-export type UserRole = 'SUPER_ADMIN' | 'EDITOR' | 'REVIEWER' | 'CONTRIBUTOR'
-
-export const ITEM_STATUSES: ItemStatus[] = ['DRAFT', 'PENDING_REVIEW', 'PUBLISHED', 'REJECTED', 'ARCHIVED']
-export const CONTRIBUTION_STATUSES: ContributionStatus[] = [
-  'SUBMITTED',
-  'UNDER_REVIEW',
-  'APPROVED',
-  'REJECTED',
-  'NEEDS_REVISION',
-]
-export const USER_ROLES: UserRole[] = ['SUPER_ADMIN', 'EDITOR', 'REVIEWER', 'CONTRIBUTOR']
-
-export const ITEM_STATUS_LABEL: Record<ItemStatus, string> = {
-  DRAFT: 'Draft',
-  PENDING_REVIEW: 'Menunggu Tinjauan',
-  PUBLISHED: 'Terpublikasi',
-  REJECTED: 'Ditolak',
-  ARCHIVED: 'Diarsipkan',
+// ---------- Bentuk respons standar ----------
+export interface ApiOk<T> {
+  data: T;
+  meta?: PageMeta;
+}
+export interface ApiErr {
+  error: { message: string; code?: string; fields?: Record<string, string> };
+}
+export interface PageMeta {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
 }
 
-export const CONTRIBUTION_STATUS_LABEL: Record<ContributionStatus, string> = {
-  SUBMITTED: 'Diajukan',
-  UNDER_REVIEW: 'Menunggu Peninjauan',
-  APPROVED: 'Disetujui',
-  REJECTED: 'Ditolak',
-  NEEDS_REVISION: 'Perlu Revisi',
+// ---------- Entitas ----------
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  active: boolean;
+  createdAt: string;
 }
 
-export const ROLE_LABEL: Record<UserRole, string> = {
-  SUPER_ADMIN: 'Administrator',
-  EDITOR: 'Editor',
-  REVIEWER: 'Kurator',
-  CONTRIBUTOR: 'Kontributor',
+export interface Region {
+  id: string;
+  code: string;
+  name: string;
+  islandGroup: string;
+  capital?: string | null;
+  summary: string;
+  description?: string | null;
+  lat: number;
+  lng: number;
+  itemCount?: number;
 }
 
-/* ---------- Kategori & sumber ---------- */
-
-export interface ItemSource {
-  id?: string
-  itemId?: string
-  title: string
-  url?: string | null
-  publisher?: string | null
-  year?: string | null
-  license?: string | null
-  note?: string | null
-  createdAt?: string
-  culturalItem?: { id: string; name: string; category: string } | null
+export interface Category {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string | null;
+  icon?: string | null;
+  itemCount?: number;
 }
 
-export type MediaType = 'IMAGE' | 'AUDIO' | 'MODEL_3D' | 'VIDEO'
-
-export interface MediaAssetRecord {
-  id: string
-  itemId?: string | null
-  title: string
-  type: MediaType
-  url: string
-  mimeType?: string | null
-  fileSize?: number | null
-  license?: string | null
-  creator?: string | null
-  sourceUrl?: string | null
-  caption?: string | null
-  isFeatured?: boolean
-  createdAt?: string
-  updatedAt?: string
-  culturalItem?: { id: string; name: string; category: string } | null
+export interface Source {
+  id: string;
+  itemId?: string | null;
+  title: string;
+  creator?: string | null;
+  url?: string | null;
+  sourceType: SourceType;
+  accessDate?: string | null;
+  attribution?: string | null;
+  license?: string | null;
+  verificationNote?: string | null;
+  createdAt?: string;
 }
 
-export interface ItemPart {
-  id: string
-  name: string
-  pos: [number, number, number]
-  color: string
-  function: string
-  philosophy: string
+export interface MediaAsset {
+  id: string;
+  name: string;
+  description?: string | null;
+  type: MediaType;
+  format: string;
+  mimeType: string;
+  size: number;
+  /** Null untuk aset embed eksternal (mis. Sketchfab) */
+  storagePath: string | null;
+  /** URL embed eksternal (hanya MODEL_3D embed, mis. Sketchfab) */
+  embedUrl?: string | null;
+  /** URL siap pakai (static untuk seed, API route untuk upload, embed URL untuk aset embed) */
+  url: string;
+  license?: string | null;
+  attribution?: string | null;
+  status: "ACTIVE" | "ARCHIVED";
+  uploader?: { id: string; name: string } | null;
+  usageCount: number;
+  usedBy?: { itemId: string; itemTitle: string; role: string }[];
+  createdAt: string;
 }
 
-export interface CategoryMeta {
-  id: string
-  key: string
-  label: string
-  description: string
-  icon: string
-  image: string
-  /** Jumlah item terpublikasi dalam kategori (opsional dari API). */
-  itemCount?: number
+export interface Hotspot {
+  id: string;
+  itemId: string;
+  title: string;
+  description: string;
+  x: number;
+  y: number;
+  z: number;
+  published: boolean;
 }
 
-/* ---------- Objek budaya ---------- */
-
-export interface CulturalItemFull {
-  id: string
-  slug?: string | null
-  provinceId: string
-  /** Key kategori, mis. RUMAH_ADAT — label ditampilkan via kategori API. */
-  category: string
-  name: string
-  region: string | null
-  shortDesc: string
-  description: string
-  history: string | null
-  culturalFunction: string | null
-  philosophy: string
-  imageUrl: string | null
-  model3d: string | null
-  parts: ItemPart[]
-  playable: boolean
-  sounds: SoundParam[]
-  melody: string[]
-  sources: ItemSource[]
-  mediaAssets?: MediaAssetRecord[]
-  status: ItemStatus
-  /**true bila konten/sumber masih perlu diverifikasi kurator. */
-  needsReview: boolean
-  isDemonstration: boolean
-  createdAt?: string
-  updatedAt?: string
-  province?: { name: string; slug: string; island: string }
+export interface CulturalItem {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  description: string;
+  history?: string | null;
+  meaning?: string | null;
+  status: ItemStatus;
+  featured: boolean;
+  viewCount: number;
+  attribution?: string | null;
+  license?: string | null;
+  category: Category;
+  region: Region;
+  coverMedia?: MediaAsset | null;
+  modelMedia?: MediaAsset | null;
+  audioMedia?: MediaAsset | null;
+  gallery?: MediaAsset[];
+  sources?: Source[];
+  hotspots?: Hotspot[];
+  contributionId?: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
-/** Ringkasan item untuk daftar admin. */
-export type AdminItemRecord = CulturalItemFull
-
-/* ---------- Wilayah / provinsi ---------- */
-
-export interface ProvinceSummary {
-  id: string
-  name: string
-  slug: string
-  island: string
-  capital: string
-  lat: number
-  lng: number
-  motto: string
-  itemCount: number
-  communityCount: number
+export interface Contribution {
+  id: string;
+  refCode: string;
+  title: string;
+  regionId?: string | null;
+  region?: Region | null;
+  categorySlug: string;
+  description: string;
+  sourceRef?: string | null;
+  submitterName: string;
+  submitterEmail: string;
+  status: ContributionStatus;
+  createdAt: string;
+  updatedAt: string;
+  reviews?: ModerationReview[];
 }
 
-export interface ProvinceFull {
-  id: string
-  name: string
-  slug: string
-  island: string
-  capital: string
-  lat: number
-  lng: number
-  motto: string
-  description: string
-  history: string
-  traditions: string
-  items: CulturalItemFull[]
-  contributions: ContributionRecord[]
+export interface ModerationReview {
+  id: string;
+  action: string;
+  note?: string | null;
+  createdAt: string;
+  reviewer?: { id: string; name: string; role: string };
 }
 
-/* ---------- Kontribusi & moderasi ---------- */
-
-export interface ModerationReviewRecord {
-  id: string
-  action: string
-  note: string | null
-  createdAt: string
-  reviewer?: { id: string; name: string } | null
-}
-
-export interface ContributionRecord {
-  id: string
-  provinceId: string | null
-  category: string
-  title: string
-  content: string
-  contributorName: string
-  sourceRef: string | null
-  status: ContributionStatus
-  /** Catatan kurator manusia. */
-  reviewNote: string | null
-  /** Catatan kurasi otomatis (AI) — bukan keputusan akhir. */
-  aiNote: string | null
-  /** Item budaya yang dibuat bila kontribusi disetujui & dipublikasikan. */
-  createdItemId: string | null
-  reviewedAt: string | null
-  createdAt: string
-  updatedAt?: string
-  province?: { name: string; slug: string } | null
-  user?: { id: string; name: string; email: string } | null
-  reviews?: ModerationReviewRecord[]
-}
-
-/* ---------- Autentikasi ---------- */
-
-export interface SessionUser {
-  id: string
-  name: string
-  email: string
-  role: UserRole
-}
-
-/* ---------- Statistik publik ---------- */
-
-export interface Stats {
-  provinces: number
-  items: number
-  playable: number
-  approved: number
-  pending: number
-}
-
-/* ---------- Admin ---------- */
-
-export interface AdminRecentItem {
-  id: string
-  name: string
-  status: ItemStatus
-  category: string
-  provinceName: string
-  updatedAt: string
+export interface ActivityEntry {
+  id: string;
+  action: string;
+  entityType?: string | null;
+  entityId?: string | null;
+  detail?: string | null;
+  createdAt: string;
+  user?: { id: string; name: string; role: string } | null;
 }
 
 export interface AdminStats {
-  items: {
-    total: number
-    published: number
-    draft: number
-    pendingReview: number
-    archived: number
-    playable: number
-    models3d: number
-  }
-  provinces: number
-  categories: number
-  users: number
-  contributions: {
-    total: number
-    submitted: number
-    underReview: number
-    approved: number
-    rejected: number
-    needsRevision: number
-  }
-  recentContributions: ContributionRecord[]
-  recentItems: AdminRecentItem[]
+  itemsTotal: number;
+  itemsPublished: number;
+  itemsDraft: number;
+  itemsArchived: number;
+  categoriesTotal: number;
+  regionsTotal: number;
+  mediaTotal: number;
+  mediaByType: Record<MediaType, number>;
+  models3dTotal: number;
+  audioTotal: number;
+  contributionsPending: number;
+  usersTotal: number;
 }
 
-export interface AdminUserRecord {
-  id: string
-  name: string
-  email: string
-  role: UserRole
-  createdAt: string
-  contributionCount: number
+// ---------- Payload ----------
+export interface ItemQuery {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  categorySlug?: string;
+  regionCode?: string;
+  sort?: "newest" | "oldest" | "popular" | "title";
+}
+
+export interface AdminItemQuery extends ItemQuery {
+  status?: ItemStatus | "ALL";
+  featured?: "true" | "false";
+}
+
+export interface ContributionInput {
+  title: string;
+  regionId?: string | null;
+  categorySlug: string;
+  description: string;
+  sourceRef?: string;
+  submitterName: string;
+  submitterEmail: string;
+}
+
+export interface ItemInput {
+  title: string;
+  slug?: string;
+  summary: string;
+  description: string;
+  history?: string;
+  meaning?: string;
+  status?: ItemStatus;
+  featured?: boolean;
+  categoryId: string;
+  regionId: string;
+  coverMediaId?: string | null;
+  modelMediaId?: string | null;
+  audioMediaId?: string | null;
+  galleryMediaIds?: string[];
+  attribution?: string;
+  license?: string;
+  sources?: Array<Omit<Source, "id" | "itemId" | "createdAt">>;
+  hotspots?: Array<Omit<Hotspot, "id" | "itemId" | "createdAt">>;
+}
+
+export interface RegionInput {
+  code: string;
+  name: string;
+  islandGroup: string;
+  capital?: string;
+  summary: string;
+  description?: string;
+  lat: number;
+  lng: number;
+}
+
+export interface CategoryInput {
+  name: string;
+  slug?: string;
+  description?: string;
+  icon?: string;
+  sortOrder?: number;
+}
+
+export interface MediaInput {
+  name?: string;
+  description?: string;
+  type?: MediaType;
+  license?: string;
+  attribution?: string;
+  /** Payload khusus embed eksternal (Sketchfab) — lihat api.admin.media.embed */
+  embedUrl?: string;
+}
+
+export interface UserInput {
+  name: string;
+  email: string;
+  password?: string;
+  role: Role;
+  active?: boolean;
+}
+
+export interface ContributionStatusInput {
+  status: ContributionStatus;
+  note?: string;
+  publishItemId?: boolean;
 }

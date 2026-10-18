@@ -12,3 +12,4 @@ coverage/
 *.sqlite3
 upload/
 .DS_Store
+.aider*

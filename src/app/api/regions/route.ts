@@ -1,1 +1,7 @@
-export { GET } from '@/app/api/provinces/route'
+import { listRegions } from "@/server/controllers/public.controller";
+
+export const dynamic = "force-dynamic";
+
+export async function GET() {
+  return listRegions();
+}

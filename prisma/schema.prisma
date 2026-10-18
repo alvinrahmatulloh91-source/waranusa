@@ -1,3 +1,7 @@
+// WaraNusa — Database Schema (Prisma + SQLite)
+// NOTE: SQLite connector tidak mendukung enum Prisma, sehingga tipe status/diperankan
+// sebagai String yang divalidasi di layer API (zod + konstanta di src/lib/constants.ts).
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,159 +11,269 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Province {
-  id          String         @id @default(cuid())
-  name        String         @unique
-  slug        String         @unique
-  island      String // kunci grup pulau: sumatra | jawa | bali-nusa | kalimantan | sulawesi | maluku | papua
-  capital     String
-  lat         Float
-  lng         Float
-  motto       String
-  description String
-  history     String
-  traditions  String
-  items          CulturalItem[]
-  contributions  Contribution[]
-  createdAt      DateTime       @default(now())
-}
+// ============ AUTH & USERS ============
 
 model User {
-  id           String     @id @default(cuid())
-  email        String     @unique
+  id           String   @id @default(cuid())
   name         String
+  email        String   @unique
   passwordHash String
-  role         String     @default("CONTRIBUTOR") // SUPER_ADMIN | EDITOR | REVIEWER | CONTRIBUTOR
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  sessions      Session[]
-  contributions Contribution[]
-  reviews       ModerationReview[]
+  /// SUPER_ADMIN | EDITOR | REVIEWER | CONTRIBUTOR
+  role         String   @default("CONTRIBUTOR")
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sessions          Session[]
+  culturalItems     CulturalItem[]     @relation("ItemAuthor")
+  mediaAssets       MediaAsset[]       @relation("MediaUploader")
+  contributions     Contribution[]
+  moderationReviews ModerationReview[]
+  activityLogs      ActivityLog[]
 }
 
 model Session {
   id        String   @id @default(cuid())
-  token     String   @unique @default(cuid())
+  token     String   @unique
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ============ GEOGRAFI & KATEGORI ============
+
+model Region {
+  id          String  @id @default(cuid())
+  /// Kode wilayah, contoh: ID-BA (Bali), ID-YO (DI Yogyakarta)
+  code        String  @unique
+  name        String
+  /// SUMATERA | JAWA | BALI_NUSA_TENGGARA | KALIMANTAN | SULAWESI | MALUKU_PAPUA
+  islandGroup String
+  capital     String?
+  summary     String
+  description String?
+  lat         Float
+  lng         Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  culturalItems CulturalItem[]
+  contributions Contribution[]
 }
 
 model Category {
-  id          String   @id @default(cuid())
-  key         String   @unique // RUMAH_ADAT | PAKAIAN_ADAT | ... (UPPER_SNAKE)
-  label       String
-  description String
-  icon        String // nama ikon lucide
-  image       String // path gambar ilustrasi kategori
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  name        String
+  description String?
+  /// Nama ikon lucide-react yang dipakai frontend
+  icon        String?
+  sortOrder   Int     @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
   culturalItems CulturalItem[]
 }
 
+// ============ KONTEN BUDAYA ============
+
 model CulturalItem {
-  id          String   @id @default(cuid())
-  slug        String?  @unique
-  provinceId  String
-  province    Province @relation(fields: [provinceId], references: [id], onDelete: Cascade)
-  category    String
-  categoryMeta Category @relation(fields: [category], references: [key], onUpdate: Cascade, onDelete: Restrict)
-  name        String
-  region      String? // suku/etnis asal
-  shortDesc   String
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  title       String
+  summary     String
   description String
   history     String?
-  culturalFunction String?
-  philosophy  String
-  imageUrl    String? // path gambar ilustrasi
-  model3d     String? // kunci arketipe model 3D prosedural
-  parts       String? // JSON: [{id,name,pos:[x,y,z],color,function,philosophy}]
-  playable    Boolean  @default(false)
-  sounds      String? // JSON: [{id,label,freq,type,note}]
-  melody      String? // JSON: [soundId,...] melodi demo
-  status      String   @default("PUBLISHED") // DRAFT | PENDING_REVIEW | PUBLISHED | REJECTED | ARCHIVED
-  needsReview Boolean  @default(false) // sumber/konten perlu verifikasi kurator
-  isDemonstration Boolean @default(false)
+  meaning     String?
+  /// DRAFT | PUBLISHED | ARCHIVED
+  status      String  @default("DRAFT")
+  featured    Boolean @default(false)
+  viewCount   Int     @default(0)
+  attribution String?
+  license     String?
+  categoryId  String
+  regionId    String
+  coverMediaId String?
+  modelMediaId String?
+  audioMediaId String?
+  /// Diisi otomatis bila item dibuat dari kontribusi yang disetujui
+  contributionId String?
+  createdById String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  sources     CulturalSource[]
-  mediaAssets MediaAsset[]
 
-  @@index([status, updatedAt])
-  @@index([provinceId, category])
-  @@index([category])
+  category   Category    @relation(fields: [categoryId], references: [id])
+  region     Region      @relation(fields: [regionId], references: [id])
+  coverMedia MediaAsset? @relation("ItemCover", fields: [coverMediaId], references: [id], onDelete: SetNull)
+  modelMedia MediaAsset? @relation("ItemModel", fields: [modelMediaId], references: [id], onDelete: SetNull)
+  audioMedia MediaAsset? @relation("ItemAudio", fields: [audioMediaId], references: [id], onDelete: SetNull)
+  createdBy  User?       @relation("ItemAuthor", fields: [createdById], references: [id])
+
+  gallery  CulturalItemMedia[]
+  sources  CulturalSource[]
+  hotspots ModelHotspot[]
+
+  @@index([status])
+  @@index([categoryId])
+  @@index([regionId])
 }
 
+/// Relasi many-to-many galeri media objek budaya
+model CulturalItemMedia {
+  itemId  String
+  mediaId String
+  role    String @default("GALLERY")
+  order   Int    @default(0)
+
+  item  CulturalItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  media MediaAsset   @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@id([itemId, mediaId])
+}
+
+// ============ MEDIA ============
+
+model MediaAsset {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  /// IMAGE | AUDIO | MODEL_3D | TEXTURE | THUMBNAIL
+  type        String
+  format      String
+  mimeType    String
+  size        Int
+  /// Path relatif di bawah folder uploads, contoh: media/2025/06/abc.png
+  /// Null untuk aset embed eksternal (mis. Sketchfab) yang tidak disimpan lokal.
+  storagePath String?
+  /// URL embed eksternal untuk model 3D (mis. https://sketchfab.com/models/<id>/embed).
+  /// Hanya diisi untuk MODEL_3D embed; divalidasi allowlist host di layer API.
+  embedUrl    String?
+  license     String?
+  attribution String?
+  /// ACTIVE | ARCHIVED
+  status      String  @default("ACTIVE")
+  uploaderId  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  uploader     User?               @relation("MediaUploader", fields: [uploaderId], references: [id])
+  coverFor     CulturalItem[]      @relation("ItemCover")
+  modelFor     CulturalItem[]      @relation("ItemModel")
+  audioFor     CulturalItem[]      @relation("ItemAudio")
+  galleryLinks CulturalItemMedia[]
+
+  @@index([type])
+  @@index([status])
+}
+
+// ============ SUMBER & ATRIBUSI ============
+
 model CulturalSource {
-  id           String       @id @default(cuid())
-  itemId       String
-  culturalItem CulturalItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  title        String
-  url          String?
-  publisher    String?
-  year         String?
-  license      String?
-  note         String?
-  createdAt    DateTime     @default(now())
+  id               String  @id @default(cuid())
+  itemId           String?
+  title            String
+  creator          String?
+  url              String?
+  /// BOOK | JOURNAL | WEBSITE | MUSEUM | ARCHIVE | OTHER
+  sourceType       String  @default("WEBSITE")
+  accessDate       String?
+  attribution      String?
+  license          String?
+  verificationNote String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  item CulturalItem? @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
   @@index([itemId])
 }
 
-model Contribution {
-  id              String        @id @default(cuid())
-  provinceId      String?
-  province        Province?     @relation(fields: [provinceId], references: [id], onDelete: SetNull)
-  category        String
-  title           String
-  content         String
-  contributorName String
-  sourceRef       String?
-  userId          String?
-  user            User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
-  status          String        @default("SUBMITTED") // SUBMITTED | UNDER_REVIEW | APPROVED | REJECTED | NEEDS_REVISION
-  reviewNote      String? // catatan kurator manusia
-  aiNote          String? // catatan pra-kurasi AI (bukan keputusan akhir)
-  createdItemId   String? // item budaya yang dibuat saat kontribusi dipublikasikan
-  reviewedAt      DateTime?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  reviews         ModerationReview[]
+// ============ HOTSPOT MODEL 3D ============
 
-  @@index([status, createdAt])
-  @@index([userId, createdAt])
+model ModelHotspot {
+  id          String  @id @default(cuid())
+  itemId      String
+  title       String
+  description String
+  x           Float
+  y           Float
+  z           Float
+  published   Boolean @default(true)
+  createdAt   DateTime @default(now())
+
+  item CulturalItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
+}
+
+// ============ KONTRIBUSI & MODERASI ============
+
+model Contribution {
+  id             String  @id @default(cuid())
+  /// Kode unik untuk pelacakan kontribusi anonim, contoh: WN-7K3FQA
+  refCode        String  @unique
+  title          String
+  regionId       String?
+  categorySlug   String
+  description    String
+  sourceRef      String?
+  submitterName  String
+  submitterEmail String
+  userId         String?
+  /// SUBMITTED | IN_REVIEW | NEEDS_REVISION | APPROVED | REJECTED
+  status         String  @default("SUBMITTED")
+  reviewedById   String?
+  /// Diisi saat kontribusi disetujui dan dikonversi menjadi objek budaya (draft)
+  createdItemId  String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  region  Region?            @relation(fields: [regionId], references: [id])
+  user    User?              @relation(fields: [userId], references: [id])
+  reviews ModerationReview[]
+
+  @@index([status])
+  @@index([submitterEmail])
 }
 
 model ModerationReview {
-  id             String       @id @default(cuid())
+  id             String   @id @default(cuid())
   contributionId String
-  contribution   Contribution @relation(fields: [contributionId], references: [id], onDelete: Cascade)
-  reviewerId     String?
-  reviewer       User?        @relation(fields: [reviewerId], references: [id], onDelete: SetNull)
-  action         String // aksi moderasi: UNDER_REVIEW | APPROVED | REJECTED | NEEDS_REVISION
+  reviewerId     String
+  /// SUBMIT | START_REVIEW | REQUEST_REVISION | APPROVE | REJECT
+  action         String
   note           String?
-  createdAt      DateTime     @default(now())
+  createdAt      DateTime @default(now())
 
-  @@index([contributionId, createdAt])
+  contribution Contribution @relation(fields: [contributionId], references: [id], onDelete: Cascade)
+  reviewer     User         @relation(fields: [reviewerId], references: [id])
+
+  @@index([contributionId])
 }
 
-model MediaAsset {
-  id           String        @id @default(cuid())
-  itemId       String?
-  culturalItem CulturalItem? @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  title        String
-  type         String        // IMAGE | AUDIO | MODEL_3D | VIDEO
-  url          String
-  mimeType     String?
-  fileSize     Int?
-  license      String?
-  creator      String?
-  sourceUrl    String?
-  caption      String?
-  isFeatured   Boolean       @default(false)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+// ============ AUDIT & PENGATURAN ============
 
-  @@index([itemId, type])
+model ActivityLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  entityType String?
+  entityId   String?
+  detail     String?
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([createdAt])
 }
 
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}

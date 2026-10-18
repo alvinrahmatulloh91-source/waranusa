@@ -1,12 +1,5 @@
 @import "tailwindcss";
-
 @import "tw-animate-css";
-
-:root {
-  --font-jakarta: "Plus Jakarta Sans", Arial, sans-serif;
-  --font-fraunces: Fraunces, Georgia, serif;
-  --font-geist-mono: "Geist Mono", monospace;
-}
 
 @custom-variant dark (&:is(.dark *));
 
@@ -15,7 +8,6 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-jakarta);
   --font-mono: var(--font-geist-mono);
-  --font-display: var(--font-fraunces);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -45,169 +37,164 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  /* Warna identitas WaraNusa */
-  --color-brand-teal: var(--brand-teal);
-  --color-brand-ocean: var(--brand-ocean);
-  --color-brand-green: var(--brand-green);
-  --color-brand-gold: var(--brand-gold);
-  --color-brand-orange: var(--brand-orange);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  /* Warna brand WaraNusa */
+  --color-brand-teal: #159d9a;
+  --color-brand-sea: #1261a0;
+  --color-brand-tropic: #48a66a;
+  --color-brand-gold: #f2b544;
+  --color-brand-orange: #f28c38;
+  --color-brand-ivory: #fffefa;
+  --color-brand-ink: #172b3a;
+  --color-brand-soft: #f3f8f7;
+  --color-brand-line: #e1ebe8;
 }
 
 :root {
   --radius: 0.75rem;
-  /* Palet brand WaraNusa */
-  --brand-teal: #159d9a;
-  --brand-ocean: #1261a0;
-  --brand-green: #48a66a;
-  --brand-gold: #f2b544;
-  --brand-orange: #f28c38;
-
-  --background: #fffefa; /* putih gading */
-  --foreground: #172b3a; /* tinta utama */
+  /* Palet WaraNusa (bagian 4 master prompt) */
+  --background: #fffefa;           /* putih gading */
+  --foreground: #172b3a;           /* teks utama */
   --card: #ffffff;
   --card-foreground: #172b3a;
   --popover: #ffffff;
   --popover-foreground: #172b3a;
-  --primary: #159d9a; /* teal utama */
+  --primary: #159d9a;              /* teal utama */
   --primary-foreground: #ffffff;
-  --secondary: #eaf4f2;
-  --secondary-foreground: #0f5f5d;
-  --muted: #f3f8f7; /* latar sekunder */
-  --muted-foreground: #64748b; /* teks sekunder */
-  --accent: #e6f3f1;
-  --accent-foreground: #0f5f5d;
+  --secondary: #f3f8f7;            /* latar sekunder */
+  --secondary-foreground: #172b3a;
+  --muted: #f3f8f7;
+  --muted-foreground: #64748b;     /* teks sekunder */
+  --accent: #f2b544;               /* emas hangat */
+  --accent-foreground: #172b3a;
   --destructive: #dc2626;
-  --border: #e1ebe8;
-  --input: #d8e5e1;
+  --border: #e1ebe8;               /* border */
+  --input: #d7e5e2;
   --ring: #159d9a;
   --chart-1: #159d9a;
   --chart-2: #1261a0;
-  --chart-3: #48a66a;
-  --chart-4: #f2b544;
+  --chart-3: #f2b544;
+  --chart-4: #48a66a;
   --chart-5: #f28c38;
   --sidebar: #ffffff;
   --sidebar-foreground: #172b3a;
   --sidebar-primary: #159d9a;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e6f3f1;
-  --sidebar-accent-foreground: #0f5f5d;
+  --sidebar-accent: #f3f8f7;
+  --sidebar-accent-foreground: #172b3a;
   --sidebar-border: #e1ebe8;
   --sidebar-ring: #159d9a;
 }
 
 .dark {
-  --brand-teal: #2ab5b1;
-  --brand-ocean: #4a90d9;
-  --brand-green: #5cbd82;
-  --brand-gold: #f2b544;
-  --brand-orange: #f2a05c;
-
-  --background: #0c1b22;
-  --foreground: #e9f2f1;
-  --card: #12242d;
-  --card-foreground: #e9f2f1;
-  --popover: #12242d;
-  --popover-foreground: #e9f2f1;
-  --primary: #2ab5b1;
-  --primary-foreground: #06211f;
-  --secondary: #16303a;
-  --secondary-foreground: #d5e8e5;
-  --muted: #142a33;
-  --muted-foreground: #93aeb0;
-  --accent: #173440;
-  --accent-foreground: #d5e8e5;
+  --background: #0d1b21;
+  --foreground: #e6f1ef;
+  --card: #13252d;
+  --card-foreground: #e6f1ef;
+  --popover: #13252d;
+  --popover-foreground: #e6f1ef;
+  --primary: #2cc0bc;
+  --primary-foreground: #06251f;
+  --secondary: #1a2f38;
+  --secondary-foreground: #e6f1ef;
+  --muted: #1a2f38;
+  --muted-foreground: #93a8b4;
+  --accent: #f2b544;
+  --accent-foreground: #172b3a;
   --destructive: #f87171;
-  --border: #1e3742;
-  --input: #24404b;
-  --ring: #2ab5b1;
-  --chart-1: #2ab5b1;
-  --chart-2: #4a90d9;
-  --chart-3: #5cbd82;
-  --chart-4: #f2b544;
-  --chart-5: #f2a05c;
-  --sidebar: #12242d;
-  --sidebar-foreground: #e9f2f1;
-  --sidebar-primary: #2ab5b1;
-  --sidebar-primary-foreground: #06211f;
-  --sidebar-accent: #173440;
-  --sidebar-accent-foreground: #d5e8e5;
-  --sidebar-border: #1e3742;
-  --sidebar-ring: #2ab5b1;
+  --border: #24404b;
+  --input: #2a4a56;
+  --ring: #2cc0bc;
+  --chart-1: #2cc0bc;
+  --chart-2: #4a8fd0;
+  --chart-3: #f2b544;
+  --chart-4: #6cc791;
+  --chart-5: #f2a25c;
+  --sidebar: #13252d;
+  --sidebar-foreground: #e6f1ef;
+  --sidebar-primary: #2cc0bc;
+  --sidebar-primary-foreground: #06251f;
+  --sidebar-accent: #1a2f38;
+  --sidebar-accent-foreground: #e6f1ef;
+  --sidebar-border: #24404b;
+  --sidebar-ring: #2cc0bc;
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    scroll-behavior: smooth;
+  }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "ss01";
+  }
+  :focus-visible {
+    outline: 2px solid #159d9a;
+    outline-offset: 2px;
   }
 }
 
-/* Scrollbar kustom bernuansa teal */
-.wn-scroll::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-.wn-scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-.wn-scroll::-webkit-scrollbar-thumb {
-  background: #9fd4d1;
-  border-radius: 8px;
-}
-.wn-scroll::-webkit-scrollbar-thumb:hover {
-  background: #159d9a;
+/* ====== Utilitas brand ====== */
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+  .bg-brand-gradient {
+    background: linear-gradient(135deg, #159d9a 0%, #1261a0 100%);
+  }
+  .bg-brand-gradient-soft {
+    background: linear-gradient(135deg, rgba(21, 157, 154, 0.08), rgba(18, 97, 160, 0.06));
+  }
+  .bg-ivory-pattern {
+    background-color: #fffefa;
+    background-image: radial-gradient(#e1ebe8 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+  .card-hover {
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  }
+  .card-hover:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px -12px rgba(23, 43, 58, 0.18);
+    border-color: #b9d8d4;
+  }
 }
 
-/* Pola tekstil halus untuk latar section (nuansa tenun, bukan batik cokelat) */
-.wn-batik {
-  background-image: radial-gradient(circle at 1px 1px, rgba(21, 157, 154, 0.08) 1.5px, transparent 0);
-  background-size: 22px 22px;
-}
+/* Scrollbar halus untuk panel panjang */
+.nice-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.nice-scroll::-webkit-scrollbar-track { background: transparent; }
+.nice-scroll::-webkit-scrollbar-thumb { background: #cfe0dc; border-radius: 8px; }
+.nice-scroll::-webkit-scrollbar-thumb:hover { background: #a9cac4; }
 
-/* Garis tepi gradasi emas-teal untuk kartu sorotan */
-.wn-edge-gold {
-  border: 1px solid transparent;
-  background:
-    linear-gradient(var(--card), var(--card)) padding-box,
-    linear-gradient(120deg, rgba(242, 181, 68, 0.55), rgba(21, 157, 154, 0.45), rgba(18, 97, 160, 0.35)) border-box;
+/* ====== Leaflet kustomisasi ====== */
+.leaflet-container {
+  font-family: inherit;
+  background: #dfeef1;
 }
+.wn-region-marker {
+  background: none;
+  border: none;
+}
+.wn-marker-dot {
+  width: 18px; height: 18px; border-radius: 9999px;
+  background: #159d9a; border: 3px solid #fffefa;
+  box-shadow: 0 2px 8px rgba(18, 97, 160, 0.45);
+  transition: transform .2s ease;
+}
+.wn-marker-dot:hover { transform: scale(1.2); }
+.wn-marker-active .wn-marker-dot { background: #f2b544; border-color: #172b3a; transform: scale(1.15); }
 
-/* Denyut penanda provinsi di peta */
-@keyframes wn-pulse {
-  0% {
-    transform: scale(1);
-    opacity: 0.65;
+/* ====== Reduced motion ====== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
-  70% {
-    transform: scale(2.4);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(2.4);
-    opacity: 0;
-  }
-}
-.wn-marker-pulse {
-  transform-origin: center;
-  transform-box: fill-box;
-  animation: wn-pulse 2.2s ease-out infinite;
-}
-
-@keyframes wn-float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-7px);
-  }
-}
-.wn-float {
-  animation: wn-float 5s ease-in-out infinite;
+  .card-hover:hover { transform: none; }
 }
