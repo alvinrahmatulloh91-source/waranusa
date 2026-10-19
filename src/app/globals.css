@@ -198,3 +198,54 @@
   }
   .card-hover:hover { transform: none; }
 }
+
+/* ====== Fitur Aksesibilitas (A11y) ====== */
+html.text-size-normal {
+  font-size: 100%;
+}
+html.text-size-medium {
+  font-size: 110%;
+}
+html.text-size-large {
+  font-size: 125%;
+}
+
+/* Mode Kontras Tinggi (High Contrast Mode) */
+html.high-contrast {
+  --background: #000000 !important;
+  --foreground: #ffffff !important;
+  --card: #050505 !important;
+  --card-foreground: #ffffff !important;
+  --popover: #050505 !important;
+  --popover-foreground: #ffffff !important;
+  --primary: #ffd700 !important;
+  --primary-foreground: #000000 !important;
+  --secondary: #1a1a1a !important;
+  --secondary-foreground: #ffffff !important;
+  --muted: #1a1a1a !important;
+  --muted-foreground: #facc15 !important;
+  --accent: #ffd700 !important;
+  --accent-foreground: #000000 !important;
+  --border: #ffd700 !important;
+  --input: #333333 !important;
+  --ring: #ffd700 !important;
+  filter: contrast(115%);
+}
+
+html.high-contrast body {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+html.high-contrast button,
+html.high-contrast input,
+html.high-contrast textarea,
+html.high-contrast select {
+  border-color: #ffd700 !important;
+}
+
+html.high-contrast a {
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+  color: #ffd700 !important;
+}
